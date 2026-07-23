@@ -43,6 +43,12 @@ void auth.restore()
         <RouterLink v-else class="account-link" to="/profile">{{
           auth.user?.display_name
         }}</RouterLink>
+        <RouterLink
+          v-if="auth.user?.roles.includes('administrator')"
+          class="account-link"
+          to="/admin/author-applications"
+          >Админ</RouterLink
+        >
         <button
           v-if="auth.isAuthenticated"
           class="account-link"

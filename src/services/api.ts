@@ -100,6 +100,19 @@ export function createAuthorApplication(payload: {
     headers: { 'Content-Type': 'application/json' },
   })
 }
+export function listAuthorApplications(): Promise<AuthorApplication[]> {
+  return request('/author-applications')
+}
+export function decideAuthorApplication(
+  id: string,
+  payload: { status: 'approved' | 'rejected'; review_note?: string },
+): Promise<AuthorApplication> {
+  return request(`/author-applications/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
 
 export async function logout(): Promise<void> {
   const response = await fetch(`${apiUrl}/api/v1/auth/logout`, {
