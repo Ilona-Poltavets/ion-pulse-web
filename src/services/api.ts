@@ -22,6 +22,9 @@ export interface LoginPayload {
   email: string
   password: string
 }
+export interface ProfileUpdatePayload {
+  display_name: string
+}
 
 const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
@@ -69,6 +72,13 @@ export function login(payload: LoginPayload): Promise<AuthenticatedUser> {
 
 export function getCurrentUser(): Promise<AuthenticatedUser> {
   return request('/auth/me')
+}
+export function updateProfile(payload: ProfileUpdatePayload): Promise<AuthenticatedUser> {
+  return request('/auth/me', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  })
 }
 
 export async function logout(): Promise<void> {

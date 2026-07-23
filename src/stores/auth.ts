@@ -6,8 +6,10 @@ import {
   login,
   logout,
   register,
+  updateProfile,
   type AuthenticatedUser,
   type LoginPayload,
+  type ProfileUpdatePayload,
   type RegisterPayload,
 } from '@/services/api'
 
@@ -41,5 +43,8 @@ export const useAuthStore = defineStore('auth', () => {
     await logout()
     user.value = null
   }
-  return { user, isLoading, isAuthenticated, signUp, signIn, signOut, restore }
+  async function update(payload: ProfileUpdatePayload): Promise<void> {
+    await authenticate(() => updateProfile(payload))
+  }
+  return { user, isLoading, isAuthenticated, signUp, signIn, signOut, restore, update }
 })

@@ -40,7 +40,17 @@ void auth.restore()
 
       <div class="header-actions">
         <RouterLink v-if="!auth.isAuthenticated" class="account-link" to="/login">Войти</RouterLink>
-        <button v-else class="account-link" type="button" @click="auth.signOut">Выйти</button>
+        <RouterLink v-else class="account-link" to="/profile">{{
+          auth.user?.display_name
+        }}</RouterLink>
+        <button
+          v-if="auth.isAuthenticated"
+          class="account-link"
+          type="button"
+          @click="auth.signOut"
+        >
+          Выйти
+        </button>
         <button class="locale-switcher" type="button" @click="setLocale(nextLocale)">
           <span>{{ locale.toUpperCase() }}</span>
           <span aria-hidden="true">→</span>
