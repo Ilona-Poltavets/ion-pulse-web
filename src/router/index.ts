@@ -22,6 +22,7 @@ const router = createRouter({
       component: AdminApplicationsView,
     },
     { path: '/write', name: 'write', component: WriteView },
+    { path: '/write/:id', name: 'edit-draft', component: WriteView },
   ],
 })
 

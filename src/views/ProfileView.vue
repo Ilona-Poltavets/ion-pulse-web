@@ -104,6 +104,9 @@ async function submitApplication(): Promise<void> {
               <strong>{{ draft.title }}</strong>
               <small>{{ draft.category_slug }} · {{ draft.status }}</small>
             </div>
+            <RouterLink class="button button-secondary" :to="`/write/${draft.id}`">
+              Редактировать
+            </RouterLink>
             <button
               class="button button-secondary"
               type="button"

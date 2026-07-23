@@ -138,6 +138,16 @@ export function listMyDrafts(): Promise<Draft[]> {
 export function submitDraft(id: string): Promise<Draft> {
   return request(`/publications/${id}/submit`, { method: 'POST' })
 }
+export function updateDraft(
+  id: string,
+  payload: Omit<DraftCreatePayload, 'source_locale'>,
+): Promise<Draft> {
+  return request(`/publications/${id}/draft`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
 
 export async function logout(): Promise<void> {
   const response = await fetch(`${apiUrl}/api/v1/auth/logout`, {

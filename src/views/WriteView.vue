@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { createDraft, type DraftCreatePayload } from '@/services/api'
+import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { createDraft, listMyDrafts, updateDraft, type DraftCreatePayload } from '@/services/api'
 const router = useRouter()
+const route = useRoute()
+const draftId = typeof route.params.id === 'string' ? route.params.id : null
 const draft = ref<DraftCreatePayload>({
   category_slug: 'reviews',
   source_locale: 'ru',
@@ -11,9 +13,37 @@ const draft = ref<DraftCreatePayload>({
   body: '',
 })
 const message = ref('')
+onMounted(async () => {
+  if (!draftId) return
+  try {
+    const existing = (await listMyDrafts()).find((item) => item.id === draftId)
+    if (!existing) {
+      message.value = 'Черновик не найден или недоступен для редактирования'
+      return
+    }
+    draft.value = {
+      category_slug: existing.category_slug,
+      source_locale: existing.source_locale,
+      title: existing.title,
+      summary: existing.summary,
+      body: existing.body,
+    }
+  } catch (error) {
+    message.value = error instanceof Error ? error.message : 'Не удалось загрузить черновик'
+  }
+})
 async function save(): Promise<void> {
   try {
-    await createDraft(draft.value)
+    if (draftId) {
+      await updateDraft(draftId, {
+        category_slug: draft.value.category_slug,
+        title: draft.value.title,
+        summary: draft.value.summary,
+        body: draft.value.body,
+      })
+    } else {
+      await createDraft(draft.value)
+    }
     await router.push('/profile')
   } catch (error) {
     message.value = error instanceof Error ? error.message : 'Ошибка'
@@ -33,7 +63,7 @@ async function save(): Promise<void> {
           <option value="esports">Киберспорт</option>
         </select></label
       ><label
-        >Язык<select v-model="draft.source_locale">
+        >Язык<select v-model="draft.source_locale" :disabled="Boolean(draftId)">
           <option value="ru">Русский</option>
           <option value="en">English</option>
         </select></label
@@ -41,7 +71,9 @@ async function save(): Promise<void> {
       ><label>Анонс<textarea v-model.trim="draft.summary" required minlength="20" /></label
       ><label>Текст<textarea v-model.trim="draft.body" required minlength="50" /></label>
       <p v-if="message">{{ message }}</p>
-      <button class="button button-primary">Сохранить черновик</button>
+      <button class="button button-primary">
+        {{ draftId ? 'Сохранить изменения' : 'Сохранить черновик' }}
+      </button>
     </form>
   </section>
 </template>
