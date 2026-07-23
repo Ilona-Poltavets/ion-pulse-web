@@ -185,6 +185,26 @@ a {
   border-radius: 4px;
   font: inherit;
 }
+.auth-card textarea {
+  min-height: 110px;
+  padding: 0.8rem;
+  color: var(--text);
+  background: #10111a;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+  resize: vertical;
+}
+.author-application {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.author-application h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
 .form-error {
   color: #ff8f94;
   font-size: 0.85rem;

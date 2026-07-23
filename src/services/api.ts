@@ -25,6 +25,13 @@ export interface LoginPayload {
 export interface ProfileUpdatePayload {
   display_name: string
 }
+export interface AuthorApplication {
+  id: string
+  motivation: string
+  portfolio_url: string | null
+  status: string
+  created_at: string
+}
 
 const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
@@ -76,6 +83,19 @@ export function getCurrentUser(): Promise<AuthenticatedUser> {
 export function updateProfile(payload: ProfileUpdatePayload): Promise<AuthenticatedUser> {
   return request('/auth/me', {
     method: 'PATCH',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
+export function getAuthorApplication(): Promise<AuthorApplication | null> {
+  return request('/author-applications/me')
+}
+export function createAuthorApplication(payload: {
+  motivation: string
+  portfolio_url?: string
+}): Promise<AuthorApplication> {
+  return request('/author-applications', {
+    method: 'POST',
     body: JSON.stringify(payload),
     headers: { 'Content-Type': 'application/json' },
   })
