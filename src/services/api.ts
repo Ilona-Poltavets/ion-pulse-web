@@ -32,6 +32,13 @@ export interface AuthorApplication {
   status: string
   created_at: string
 }
+export interface DraftCreatePayload {
+  category_slug: 'reviews' | 'news' | 'guides' | 'esports'
+  source_locale: 'ru' | 'en'
+  title: string
+  summary: string
+  body: string
+}
 
 const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
@@ -109,6 +116,13 @@ export function decideAuthorApplication(
 ): Promise<AuthorApplication> {
   return request(`/author-applications/${id}`, {
     method: 'PATCH',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
+export function createDraft(payload: DraftCreatePayload): Promise<unknown> {
+  return request('/publications/drafts', {
+    method: 'POST',
     body: JSON.stringify(payload),
     headers: { 'Content-Type': 'application/json' },
   })

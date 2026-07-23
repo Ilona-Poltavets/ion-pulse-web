@@ -3,6 +3,7 @@ import HomeView from '@/views/HomeView.vue'
 import AuthView from '@/views/AuthView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import AdminApplicationsView from '@/views/AdminApplicationsView.vue'
+import WriteView from '@/views/WriteView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -20,6 +21,7 @@ const router = createRouter({
       name: 'admin-author-applications',
       component: AdminApplicationsView,
     },
+    { path: '/write', name: 'write', component: WriteView },
   ],
 })
 
