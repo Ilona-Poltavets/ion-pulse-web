@@ -133,6 +133,67 @@ a {
   border-radius: 999px;
   cursor: pointer;
 }
+.header-actions {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  justify-self: end;
+}
+.account-link {
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+}
+.auth-page {
+  display: grid;
+  min-height: calc(100vh - 170px);
+  place-items: center;
+  padding: 4rem 0;
+}
+.auth-card {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 440px);
+  padding: 2.4rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.auth-card h1 {
+  margin-bottom: 0;
+  font-size: 2.5rem;
+}
+.auth-card > p:not(.eyebrow):not(.form-error) {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.auth-card label {
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.auth-card input {
+  width: 100%;
+  padding: 0.8rem;
+  color: var(--text);
+  background: #10111a;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+}
+.form-error {
+  color: #ff8f94;
+  font-size: 0.85rem;
+}
+.auth-link {
+  color: var(--lime);
+  font-size: 0.85rem;
+  text-align: center;
+}
 
 .locale-switcher strong {
   color: var(--text);

@@ -4,8 +4,10 @@ import { RouterLink, RouterView } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import type { SupportedLocale } from '@/i18n'
+import { useAuthStore } from '@/stores/auth'
 
 const { locale, t } = useI18n()
+const auth = useAuthStore()
 
 const nextLocale = computed<SupportedLocale>(() => (locale.value === 'ru' ? 'en' : 'ru'))
 
@@ -14,6 +16,8 @@ function setLocale(next: SupportedLocale): void {
   document.documentElement.lang = next
   localStorage.setItem('ion-pulse-locale', next)
 }
+
+void auth.restore()
 </script>
 
 <template>
@@ -34,11 +38,15 @@ function setLocale(next: SupportedLocale): void {
         <a href="#roadmap">{{ t('navigation.roadmap') }}</a>
       </nav>
 
-      <button class="locale-switcher" type="button" @click="setLocale(nextLocale)">
-        <span>{{ locale.toUpperCase() }}</span>
-        <span aria-hidden="true">→</span>
-        <strong>{{ nextLocale.toUpperCase() }}</strong>
-      </button>
+      <div class="header-actions">
+        <RouterLink v-if="!auth.isAuthenticated" class="account-link" to="/login">Войти</RouterLink>
+        <button v-else class="account-link" type="button" @click="auth.signOut">Выйти</button>
+        <button class="locale-switcher" type="button" @click="setLocale(nextLocale)">
+          <span>{{ locale.toUpperCase() }}</span>
+          <span aria-hidden="true">→</span>
+          <strong>{{ nextLocale.toUpperCase() }}</strong>
+        </button>
+      </div>
     </header>
 
     <main>
