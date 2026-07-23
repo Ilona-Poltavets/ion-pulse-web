@@ -25,8 +25,16 @@ onMounted(async () => {
     return
   }
   displayName.value = auth.user.display_name
-  application.value = await getAuthorApplication()
-  drafts.value = await listMyDrafts()
+  try {
+    const [loadedApplication, loadedDrafts] = await Promise.all([
+      getAuthorApplication(),
+      listMyDrafts(),
+    ])
+    application.value = loadedApplication
+    drafts.value = loadedDrafts
+  } catch (error) {
+    message.value = error instanceof Error ? error.message : 'Не удалось загрузить профиль'
+  }
 })
 async function save(): Promise<void> {
   try {
@@ -97,7 +105,6 @@ async function submitApplication(): Promise<void> {
               <small>{{ draft.category_slug }} · {{ draft.status }}</small>
             </div>
             <button
-              v-if="draft.status === 'draft' || draft.status === 'changes_requested'"
               class="button button-secondary"
               type="button"
               @click="submitDraftForReview(draft.id)"
