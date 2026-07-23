@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { createDraft, type DraftCreatePayload } from '@/services/api'
+const router = useRouter()
 const draft = ref<DraftCreatePayload>({
   category_slug: 'reviews',
   source_locale: 'ru',
@@ -12,7 +14,7 @@ const message = ref('')
 async function save(): Promise<void> {
   try {
     await createDraft(draft.value)
-    message.value = 'Черновик сохранён'
+    await router.push('/profile')
   } catch (error) {
     message.value = error instanceof Error ? error.message : 'Ошибка'
   }

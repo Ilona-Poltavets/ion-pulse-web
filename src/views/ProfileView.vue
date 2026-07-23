@@ -5,7 +5,10 @@ import { useAuthStore } from '@/stores/auth'
 import {
   createAuthorApplication,
   getAuthorApplication,
+  listMyDrafts,
+  submitDraft,
   type AuthorApplication,
+  type Draft,
 } from '@/services/api'
 const auth = useAuthStore()
 const router = useRouter()
@@ -14,6 +17,7 @@ const message = ref('')
 const application = ref<AuthorApplication | null>(null)
 const motivation = ref('')
 const portfolioUrl = ref('')
+const drafts = ref<Draft[]>([])
 onMounted(async () => {
   if (!auth.user) await auth.restore()
   if (!auth.user) {
@@ -22,6 +26,7 @@ onMounted(async () => {
   }
   displayName.value = auth.user.display_name
   application.value = await getAuthorApplication()
+  drafts.value = await listMyDrafts()
 })
 async function save(): Promise<void> {
   try {
@@ -29,6 +34,15 @@ async function save(): Promise<void> {
     message.value = 'Профиль сохранён'
   } catch (error) {
     message.value = error instanceof Error ? error.message : 'Ошибка'
+  }
+}
+async function submitDraftForReview(id: string): Promise<void> {
+  try {
+    const updated = await submitDraft(id)
+    drafts.value = drafts.value.map((draft) => (draft.id === id ? updated : draft))
+    message.value = 'Материал отправлен редактору'
+  } catch (error) {
+    message.value = error instanceof Error ? error.message : 'Не удалось отправить материал'
   }
 }
 async function submitApplication(): Promise<void> {
@@ -72,6 +86,27 @@ async function submitApplication(): Promise<void> {
         <button class="button button-secondary">Отправить заявку</button>
       </form>
       <p v-else-if="application">Заявка на автора: {{ application.status }}</p>
+      <section class="author-application">
+        <p class="eyebrow">MY PUBLICATIONS</p>
+        <h2>Мои материалы</h2>
+        <p v-if="!drafts.length">Черновиков пока нет.</p>
+        <ul v-else class="draft-list">
+          <li v-for="draft in drafts" :key="draft.id">
+            <div>
+              <strong>{{ draft.title }}</strong>
+              <small>{{ draft.category_slug }} · {{ draft.status }}</small>
+            </div>
+            <button
+              v-if="draft.status === 'draft' || draft.status === 'changes_requested'"
+              class="button button-secondary"
+              type="button"
+              @click="submitDraftForReview(draft.id)"
+            >
+              Отправить редактору
+            </button>
+          </li>
+        </ul>
+      </section>
     </div>
   </section>
 </template>

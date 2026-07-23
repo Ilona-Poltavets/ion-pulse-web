@@ -39,6 +39,11 @@ export interface DraftCreatePayload {
   summary: string
   body: string
 }
+export interface Draft extends DraftCreatePayload {
+  id: string
+  status: string
+  created_at: string
+}
 
 const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
@@ -120,12 +125,18 @@ export function decideAuthorApplication(
     headers: { 'Content-Type': 'application/json' },
   })
 }
-export function createDraft(payload: DraftCreatePayload): Promise<unknown> {
+export function createDraft(payload: DraftCreatePayload): Promise<Draft> {
   return request('/publications/drafts', {
     method: 'POST',
     body: JSON.stringify(payload),
     headers: { 'Content-Type': 'application/json' },
   })
+}
+export function listMyDrafts(): Promise<Draft[]> {
+  return request('/publications/mine')
+}
+export function submitDraft(id: string): Promise<Draft> {
+  return request(`/publications/${id}/submit`, { method: 'POST' })
 }
 
 export async function logout(): Promise<void> {
