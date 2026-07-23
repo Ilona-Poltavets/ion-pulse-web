@@ -4,6 +4,7 @@ import AuthView from '@/views/AuthView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import AdminApplicationsView from '@/views/AdminApplicationsView.vue'
 import WriteView from '@/views/WriteView.vue'
+import EditorialQueueView from '@/views/EditorialQueueView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,6 +24,7 @@ const router = createRouter({
     },
     { path: '/write', name: 'write', component: WriteView },
     { path: '/write/:id', name: 'edit-draft', component: WriteView },
+    { path: '/editorial-queue', name: 'editorial-queue', component: EditorialQueueView },
   ],
 })
 

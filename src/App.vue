@@ -49,6 +49,12 @@ void auth.restore()
           to="/admin/author-applications"
           >Админ</RouterLink
         >
+        <RouterLink
+          v-if="auth.user?.roles.includes('editor') || auth.user?.roles.includes('administrator')"
+          class="account-link"
+          to="/editorial-queue"
+          >Редактор</RouterLink
+        >
         <button
           v-if="auth.isAuthenticated"
           class="account-link"

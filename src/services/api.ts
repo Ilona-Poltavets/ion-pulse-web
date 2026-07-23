@@ -148,6 +148,19 @@ export function updateDraft(
     headers: { 'Content-Type': 'application/json' },
   })
 }
+export function listEditorialQueue(): Promise<Draft[]> {
+  return request('/publications/editorial-queue')
+}
+export function decidePublication(
+  id: string,
+  payload: { decision: 'publish' | 'reject' | 'request_changes'; note: string },
+): Promise<Draft> {
+  return request(`/publications/${id}/editorial-decision`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
 
 export async function logout(): Promise<void> {
   const response = await fetch(`${apiUrl}/api/v1/auth/logout`, {
