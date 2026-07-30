@@ -7,8 +7,10 @@ import {
   type AuthorApplication,
 } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 const auth = useAuthStore()
 const router = useRouter()
+const { t } = useI18n()
 const applications = ref<AuthorApplication[]>([])
 const notes = ref<Record<string, string>>({})
 const message = ref('')
@@ -23,7 +25,7 @@ onMounted(async () => {
   try {
     applications.value = await listAuthorApplications()
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось загрузить заявки'
+    message.value = error instanceof Error ? error.message : t('adminApplications.loadError')
   }
 })
 async function decide(
@@ -39,7 +41,7 @@ async function decide(
     applications.value = applications.value.filter((item) => item.id !== application.id)
     expandedId.value = null
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось сохранить решение'
+    message.value = error instanceof Error ? error.message : t('adminApplications.saveError')
   } finally {
     isSaving.value = false
   }
@@ -49,13 +51,13 @@ async function decide(
   <section class="editorial-page">
     <header class="queue-header">
       <div>
-        <p class="eyebrow">ADMINISTRATION</p>
-        <h1>Заявки авторов</h1>
+        <p class="eyebrow">{{ t('adminApplications.eyebrow') }}</p>
+        <h1>{{ t('adminApplications.title') }}</h1>
       </div>
-      <span>{{ applications.length }} ожидают решения</span>
+      <span>{{ t('adminApplications.pendingCount', { count: applications.length }) }}</span>
     </header>
     <p v-if="message" class="dashboard-message">{{ message }}</p>
-    <p v-if="!applications.length" class="empty-state">Активных заявок нет.</p>
+    <p v-if="!applications.length" class="empty-state">{{ t('adminApplications.empty') }}</p>
     <div v-else class="queue-list">
       <article
         v-for="application in applications"
@@ -69,8 +71,8 @@ async function decide(
           @click="expandedId = expandedId === application.id ? null : application.id"
         >
           <div>
-            <p class="eyebrow">AUTHOR APPLICATION</p>
-            <h2>Заявка от участника</h2>
+            <p class="eyebrow">{{ t('adminApplications.applicationEyebrow') }}</p>
+            <h2>{{ t('adminApplications.applicationTitle') }}</h2>
             <p>
               {{ application.motivation.slice(0, 160)
               }}{{ application.motivation.length > 160 ? '…' : '' }}
@@ -86,12 +88,12 @@ async function decide(
             :href="application.portfolio_url"
             target="_blank"
             rel="noreferrer"
-            >Открыть портфолио ↗</a
+            >{{ t('adminApplications.openPortfolio') }}</a
           >
           <label
-            >Комментарий к решению<textarea
+            >{{ t('adminApplications.reviewNote') }}<textarea
               v-model="notes[application.id]"
-              placeholder="Поясните решение участнику"
+              :placeholder="t('adminApplications.reviewNotePlaceholder')"
             />
           </label>
           <div class="editor-actions">
@@ -100,14 +102,14 @@ async function decide(
               :disabled="isSaving"
               @click="decide(application, 'approved')"
             >
-              Одобрить
+              {{ t('adminApplications.approve') }}
             </button>
             <button
               class="button button-secondary"
               :disabled="isSaving"
               @click="decide(application, 'rejected')"
             >
-              Отклонить
+              {{ t('adminApplications.reject') }}
             </button>
           </div>
         </div>

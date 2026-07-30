@@ -135,6 +135,9 @@ export const messages = {
       draftUnavailable: 'Черновик не найден или недоступен для редактирования', loadError: 'Не удалось загрузить черновик', revisionRestored: 'Восстановлена версия {number}', restoreError: 'Не удалось восстановить версию', digestRequired: 'Добавьте хотя бы один материал в дайджест', autoSaved: 'Черновик сохранён автоматически', saveError: 'Не удалось сохранить черновик',
       types: { article: 'Статья', review: 'Ревью', news: 'Новость', guide: 'Гайд', digest: 'Дайджест' },
     },
+    adminApplications: {
+      eyebrow: 'Администрирование', title: 'Заявки авторов', pendingCount: '{count} ожидают решения', empty: 'Активных заявок нет.', applicationEyebrow: 'Заявка автора', applicationTitle: 'Заявка от участника', openPortfolio: 'Открыть портфолио ↗', reviewNote: 'Комментарий к решению', reviewNotePlaceholder: 'Поясните решение участнику', approve: 'Одобрить', reject: 'Отклонить', loadError: 'Не удалось загрузить заявки', saveError: 'Не удалось сохранить решение',
+    },
   },
   en: {
     navigation: {
@@ -272,6 +275,9 @@ export const messages = {
       preview: 'Preview', hidePreview: 'Hide preview', saveAndExit: 'Save and exit', createDraft: 'Create draft', revisionHistory: 'Revision history', revisionsEyebrow: 'Revision history', version: 'Version {number}', restore: 'Restore', previewEyebrow: 'Publication preview', close: 'Close', previewHeadline: 'Material headline', previewSummary: 'The material summary will appear here.', previewBody: 'The material body will appear here.',
       draftUnavailable: 'The draft was not found or is unavailable for editing', loadError: 'Could not load draft', revisionRestored: 'Restored version {number}', restoreError: 'Could not restore version', digestRequired: 'Add at least one material to the digest', autoSaved: 'Draft saved automatically', saveError: 'Could not save draft',
       types: { article: 'Article', review: 'Review', news: 'News', guide: 'Guide', digest: 'Digest' },
+    },
+    adminApplications: {
+      eyebrow: 'Administration', title: 'Author applications', pendingCount: '{count} awaiting a decision', empty: 'There are no active applications.', applicationEyebrow: 'Author application', applicationTitle: 'Application from a member', openPortfolio: 'Open portfolio ↗', reviewNote: 'Decision note', reviewNotePlaceholder: 'Explain the decision to the member', approve: 'Approve', reject: 'Reject', loadError: 'Could not load applications', saveError: 'Could not save the decision',
     },
   },
 } as const
