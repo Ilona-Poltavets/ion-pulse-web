@@ -109,6 +109,12 @@ export const messages = {
       recoverySent: 'Если такой аккаунт существует, ссылка для восстановления уже отправлена.', tokenMissing: 'В ссылке восстановления отсутствует токен',
       recoveryError: 'Не удалось восстановить доступ', sendLink: 'Отправить ссылку', savePassword: 'Сохранить новый пароль', backToLogin: 'Вернуться ко входу',
     },
+    journal: {
+      title: 'Журнал', empty: 'Опубликованных выпусков пока нет.', issues: 'Выпуски журнала',
+      contents: 'Содержание', page: 'СТР. {number}', readStory: 'Читать материал →',
+      issueNavigation: 'Переход между выпусками', previous: '← Предыдущий выпуск', next: 'Следующий выпуск →',
+      loadError: 'Не удалось загрузить журнал', openError: 'Не удалось открыть выпуск',
+    },
   },
   en: {
     navigation: {
@@ -220,6 +226,12 @@ export const messages = {
       newPassword: 'New password', confirmPassword: 'Confirm password', passwordsMismatch: 'Passwords do not match',
       recoverySent: 'If that account exists, a recovery link has been sent.', tokenMissing: 'The recovery link has no token',
       recoveryError: 'Could not recover access', sendLink: 'Send link', savePassword: 'Save new password', backToLogin: 'Back to log in',
+    },
+    journal: {
+      title: 'Journal', empty: 'There are no published issues yet.', issues: 'Journal issues',
+      contents: 'Contents', page: 'P. {number}', readStory: 'Read story →',
+      issueNavigation: 'Issue navigation', previous: '← Previous issue', next: 'Next issue →',
+      loadError: 'Could not load journal', openError: 'Could not open issue',
     },
   },
 } as const

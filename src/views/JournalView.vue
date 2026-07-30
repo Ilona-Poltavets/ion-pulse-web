@@ -13,7 +13,7 @@ const issues = ref<JournalIssue[]>([])
 const selected = ref<JournalIssue | null>(null)
 const publications = ref<DigestItem[]>([])
 const error = ref('')
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const selectedIssueIndex = computed(() =>
@@ -34,7 +34,7 @@ async function openIssue(issue: JournalIssue, updateRoute = true): Promise<void>
   try {
     publications.value = await listJournalIssuePublications(issue.id, locale.value as 'ru' | 'en')
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Не удалось открыть выпуск'
+    error.value = caught instanceof Error ? caught.message : t('journal.openError')
   }
 }
 
@@ -44,7 +44,7 @@ onMounted(async () => {
     const issue = issues.value.find((entry) => entry.id === route.params.id)
     if (issue) await openIssue(issue, false)
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить журнал'
+    error.value = caught instanceof Error ? caught.message : t('journal.loadError')
   }
 })
 
@@ -55,18 +55,22 @@ watch(
     if (issue && selected.value?.id !== issue.id) await openIssue(issue, false)
   },
 )
+
+watch(locale, () => {
+  if (selected.value) void openIssue(selected.value, false)
+})
 </script>
 <template>
   <section class="editorial-page">
     <header class="queue-header">
       <div>
         <p class="eyebrow">ION PULSE WEEKLY</p>
-        <h1>Журнал</h1>
+        <h1>{{ t('journal.title') }}</h1>
       </div>
     </header>
     <p v-if="error" class="form-error">{{ error }}</p>
-    <p v-else-if="!issues.length" class="empty-state">Опубликованных выпусков пока нет.</p>
-    <nav v-else class="journal-shelf" aria-label="Выпуски журнала">
+    <p v-else-if="!issues.length" class="empty-state">{{ t('journal.empty') }}</p>
+    <nav v-else class="journal-shelf" :aria-label="t('journal.issues')">
       <button
         v-for="issue in issues"
         :key="issue.id"
@@ -78,8 +82,8 @@ watch(
         <span>ION PULSE</span>
         <strong>{{ issue.title }}</strong
         ><small
-          >{{ new Date(issue.period_start).toLocaleDateString() }} —
-          {{ new Date(issue.period_end).toLocaleDateString() }}</small
+          >{{ new Date(issue.period_start).toLocaleDateString(locale) }} —
+          {{ new Date(issue.period_end).toLocaleDateString(locale) }}</small
         >
       </button>
     </nav>
@@ -96,7 +100,7 @@ watch(
       <div class="journal-contents">
         <header>
           <p class="eyebrow">CONTENTS</p>
-          <h3>Содержание</h3>
+          <h3>{{ t('journal.contents') }}</h3>
         </header>
         <ol>
           <li v-for="(item, index) in publications" :key="item.id">
@@ -117,24 +121,24 @@ watch(
           :key="item.id"
           :to="`/publications/${item.id}`"
         >
-          <span>СТР. {{ String(index + 1).padStart(2, '0') }}</span>
+          <span>{{ t('journal.page', { number: String(index + 1).padStart(2, '0') }) }}</span>
           <small>{{ item.category_slug }}</small>
           <h3>{{ item.title }}</h3>
           <p>{{ item.summary }}</p>
-          <strong>Читать материал →</strong>
+          <strong>{{ t('journal.readStory') }}</strong>
         </RouterLink>
       </div>
-      <nav class="journal-pagination" aria-label="Переход между выпусками">
+      <nav class="journal-pagination" :aria-label="t('journal.issueNavigation')">
         <button
           v-if="previousIssue"
           class="button button-secondary"
           @click="openIssue(previousIssue)"
         >
-          ← Предыдущий выпуск
+          {{ t('journal.previous') }}
         </button>
         <span v-else />
         <button v-if="nextIssue" class="button button-secondary" @click="openIssue(nextIssue)">
-          Следующий выпуск →
+          {{ t('journal.next') }}
         </button>
       </nav>
     </section>
