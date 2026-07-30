@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps<{ mode: 'login' | 'register' }>()
 const router = useRouter()
 const auth = useAuthStore()
+const { t } = useI18n()
 const email = ref('')
 const displayName = ref('')
 const password = ref('')
@@ -23,7 +25,7 @@ async function submit(): Promise<void> {
     else await auth.signIn({ email: email.value, password: password.value })
     await router.push('/')
   } catch (reason) {
-    error.value = reason instanceof Error ? reason.message : 'Не удалось выполнить действие'
+    error.value = reason instanceof Error ? reason.message : t('auth.actionError')
   }
 }
 </script>
@@ -31,17 +33,17 @@ async function submit(): Promise<void> {
 <template>
   <section class="auth-page">
     <form class="auth-card" @submit.prevent="submit">
-      <p class="eyebrow">ION PULSE ACCOUNT</p>
-      <h1>{{ mode === 'register' ? 'Создать аккаунт' : 'Войти' }}</h1>
+      <p class="eyebrow">{{ t('auth.account') }}</p>
+      <h1>{{ mode === 'register' ? t('auth.registerTitle') : t('auth.loginTitle') }}</h1>
       <p>
         {{
           mode === 'register'
-            ? 'Публикуйте и обсуждайте игры на двух языках.'
-            : 'Рады видеть вас снова.'
+            ? t('auth.registerIntro')
+            : t('auth.loginIntro')
         }}
       </p>
       <label v-if="mode === 'register'"
-        >Имя пользователя<input
+        >{{ t('auth.displayName') }}<input
           v-model.trim="displayName"
           required
           minlength="2"
@@ -50,7 +52,7 @@ async function submit(): Promise<void> {
       /></label>
       <label>Email<input v-model.trim="email" required type="email" autocomplete="email" /></label>
       <label
-        >Пароль<input
+        >{{ t('auth.password') }}<input
           v-model="password"
           required
           type="password"
@@ -59,16 +61,16 @@ async function submit(): Promise<void> {
       /></label>
       <p v-if="error" class="form-error">{{ error }}</p>
       <button class="button button-primary" :disabled="auth.isLoading">
-        {{ auth.isLoading ? 'Подождите…' : mode === 'register' ? 'Зарегистрироваться' : 'Войти' }}
+        {{ auth.isLoading ? t('auth.pleaseWait') : mode === 'register' ? t('auth.registerAction') : t('auth.loginAction') }}
       </button>
       <RouterLink v-if="mode === 'login'" class="auth-link" to="/password-reset">
-        Не помните пароль?
+        {{ t('auth.forgotPassword') }}
       </RouterLink>
       <RouterLink v-if="mode === 'login'" class="auth-link" to="/sanction-appeal">
-        Обжаловать блокировку
+        {{ t('auth.appeal') }}
       </RouterLink>
       <RouterLink class="auth-link" :to="mode === 'register' ? '/login' : '/register'">{{
-        mode === 'register' ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Создать'
+        mode === 'register' ? t('auth.hasAccount') : t('auth.noAccount')
       }}</RouterLink>
     </form>
   </section>

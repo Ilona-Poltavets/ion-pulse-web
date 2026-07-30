@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import { requestPasswordReset, resetPassword } from '@/services/api'
 
 const props = defineProps<{ mode: 'request' | 'confirm' }>()
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const email = ref('')
 const password = ref('')
 const confirmation = ref('')
@@ -19,24 +21,24 @@ async function submit(): Promise<void> {
   error.value = ''
   message.value = ''
   if (props.mode === 'confirm' && password.value !== confirmation.value) {
-    error.value = 'Пароли не совпадают'
+    error.value = t('auth.passwordsMismatch')
     return
   }
   try {
     isSaving.value = true
     if (props.mode === 'request') {
       await requestPasswordReset(email.value)
-      message.value = 'Если такой аккаунт существует, ссылка для восстановления уже отправлена.'
+      message.value = t('auth.recoverySent')
     } else {
       if (!token.value) {
-        error.value = 'В ссылке восстановления отсутствует токен'
+        error.value = t('auth.tokenMissing')
         return
       }
       await resetPassword({ token: token.value, password: password.value })
       await router.replace('/login')
     }
   } catch (reason) {
-    error.value = reason instanceof Error ? reason.message : 'Не удалось восстановить доступ'
+    error.value = reason instanceof Error ? reason.message : t('auth.recoveryError')
   } finally {
     isSaving.value = false
   }
@@ -46,20 +48,20 @@ async function submit(): Promise<void> {
 <template>
   <section class="auth-page">
     <form class="auth-card" @submit.prevent="submit">
-      <p class="eyebrow">ACCOUNT RECOVERY</p>
-      <h1>{{ mode === 'request' ? 'Восстановить доступ' : 'Новый пароль' }}</h1>
+      <p class="eyebrow">{{ t('auth.recovery') }}</p>
+      <h1>{{ mode === 'request' ? t('auth.recoveryTitle') : t('auth.newPasswordTitle') }}</h1>
       <p v-if="mode === 'request'">
-        Введите email аккаунта. Мы отправим одноразовую ссылку, если адрес зарегистрирован.
+        {{ t('auth.recoveryIntro') }}
       </p>
       <p v-else>
-        Задайте новый пароль. После сохранения потребуется войти заново на всех устройствах.
+        {{ t('auth.newPasswordIntro') }}
       </p>
       <label v-if="mode === 'request'">
         Email<input v-model.trim="email" required type="email" autocomplete="email" />
       </label>
       <template v-else>
         <label>
-          Новый пароль<input
+          {{ t('auth.newPassword') }}<input
             v-model="password"
             required
             type="password"
@@ -68,7 +70,7 @@ async function submit(): Promise<void> {
           />
         </label>
         <label>
-          Повторите пароль<input
+          {{ t('auth.confirmPassword') }}<input
             v-model="confirmation"
             required
             type="password"
@@ -82,13 +84,13 @@ async function submit(): Promise<void> {
       <button class="button button-primary" :disabled="isSaving">
         {{
           isSaving
-            ? 'Подождите…'
+            ? t('auth.pleaseWait')
             : mode === 'request'
-              ? 'Отправить ссылку'
-              : 'Сохранить новый пароль'
+              ? t('auth.sendLink')
+              : t('auth.savePassword')
         }}
       </button>
-      <RouterLink class="auth-link" to="/login">Вернуться ко входу</RouterLink>
+      <RouterLink class="auth-link" to="/login">{{ t('auth.backToLogin') }}</RouterLink>
     </form>
   </section>
 </template>
