@@ -138,6 +138,9 @@ export const messages = {
     adminApplications: {
       eyebrow: 'Администрирование', title: 'Заявки авторов', pendingCount: '{count} ожидают решения', empty: 'Активных заявок нет.', applicationEyebrow: 'Заявка автора', applicationTitle: 'Заявка от участника', openPortfolio: 'Открыть портфолио ↗', reviewNote: 'Комментарий к решению', reviewNotePlaceholder: 'Поясните решение участнику', approve: 'Одобрить', reject: 'Отклонить', loadError: 'Не удалось загрузить заявки', saveError: 'Не удалось сохранить решение',
     },
+    adminUsers: {
+      eyebrow: 'Управление доступом', title: 'Пользователи и роли', active: 'активен', inactive: 'деактивирован', auditEyebrow: 'Аудит ролей', auditTitle: 'История ролей', auditEmpty: 'Изменений ролей пока нет.', granted: 'Выдана', revoked: 'Отозвана', loadError: 'Не удалось загрузить пользователей', updateError: 'Не удалось обновить роли', roles: { author: 'Автор', editor: 'Редактор', moderator: 'Модератор', content_manager: 'Контент-менеджер', administrator: 'Администратор' },
+    },
   },
   en: {
     navigation: {
@@ -278,6 +281,9 @@ export const messages = {
     },
     adminApplications: {
       eyebrow: 'Administration', title: 'Author applications', pendingCount: '{count} awaiting a decision', empty: 'There are no active applications.', applicationEyebrow: 'Author application', applicationTitle: 'Application from a member', openPortfolio: 'Open portfolio ↗', reviewNote: 'Decision note', reviewNotePlaceholder: 'Explain the decision to the member', approve: 'Approve', reject: 'Reject', loadError: 'Could not load applications', saveError: 'Could not save the decision',
+    },
+    adminUsers: {
+      eyebrow: 'Access control', title: 'Users and roles', active: 'active', inactive: 'deactivated', auditEyebrow: 'Role audit', auditTitle: 'Role history', auditEmpty: 'There are no role changes yet.', granted: 'Granted', revoked: 'Revoked', loadError: 'Could not load users', updateError: 'Could not update roles', roles: { author: 'Author', editor: 'Editor', moderator: 'Moderator', content_manager: 'Content manager', administrator: 'Administrator' },
     },
   },
 } as const
