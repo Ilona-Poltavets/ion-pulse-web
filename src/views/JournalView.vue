@@ -1,0 +1,142 @@
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
+import {
+  listJournalIssuePublications,
+  listJournalIssues,
+  type DigestItem,
+  type JournalIssue,
+} from '@/services/api'
+
+const issues = ref<JournalIssue[]>([])
+const selected = ref<JournalIssue | null>(null)
+const publications = ref<DigestItem[]>([])
+const error = ref('')
+const { locale } = useI18n()
+const route = useRoute()
+const router = useRouter()
+const selectedIssueIndex = computed(() =>
+  selected.value ? issues.value.findIndex((issue) => issue.id === selected.value?.id) : -1,
+)
+const previousIssue = computed(() =>
+  selectedIssueIndex.value > 0 ? issues.value[selectedIssueIndex.value - 1] : null,
+)
+const nextIssue = computed(() =>
+  selectedIssueIndex.value >= 0 && selectedIssueIndex.value < issues.value.length - 1
+    ? issues.value[selectedIssueIndex.value + 1]
+    : null,
+)
+
+async function openIssue(issue: JournalIssue, updateRoute = true): Promise<void> {
+  selected.value = issue
+  if (updateRoute) await router.push(`/journal/${issue.id}`)
+  try {
+    publications.value = await listJournalIssuePublications(issue.id, locale.value as 'ru' | 'en')
+  } catch (caught) {
+    error.value = caught instanceof Error ? caught.message : 'Не удалось открыть выпуск'
+  }
+}
+
+onMounted(async () => {
+  try {
+    issues.value = await listJournalIssues()
+    const issue = issues.value.find((entry) => entry.id === route.params.id)
+    if (issue) await openIssue(issue, false)
+  } catch (caught) {
+    error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить журнал'
+  }
+})
+
+watch(
+  () => route.params.id,
+  async (issueId) => {
+    const issue = issues.value.find((entry) => entry.id === issueId)
+    if (issue && selected.value?.id !== issue.id) await openIssue(issue, false)
+  },
+)
+</script>
+<template>
+  <section class="editorial-page">
+    <header class="queue-header">
+      <div>
+        <p class="eyebrow">ION PULSE WEEKLY</p>
+        <h1>Журнал</h1>
+      </div>
+    </header>
+    <p v-if="error" class="form-error">{{ error }}</p>
+    <p v-else-if="!issues.length" class="empty-state">Опубликованных выпусков пока нет.</p>
+    <nav v-else class="journal-shelf" aria-label="Выпуски журнала">
+      <button
+        v-for="issue in issues"
+        :key="issue.id"
+        class="journal-spine"
+        :class="{ selected: selected?.id === issue.id }"
+        :aria-current="selected?.id === issue.id ? 'page' : undefined"
+        @click="openIssue(issue)"
+      >
+        <span>ION PULSE</span>
+        <strong>{{ issue.title }}</strong
+        ><small
+          >{{ new Date(issue.period_start).toLocaleDateString() }} —
+          {{ new Date(issue.period_end).toLocaleDateString() }}</small
+        >
+      </button>
+    </nav>
+    <section v-if="selected" class="journal-reader" aria-labelledby="journal-title">
+      <header class="journal-cover">
+        <p class="eyebrow">WEEKLY ISSUE</p>
+        <p class="journal-cover-number">{{ String(selectedIssueIndex + 1).padStart(2, '0') }}</p>
+        <h2 id="journal-title">{{ selected.title }}</h2>
+        <p>
+          {{ new Date(selected.period_start).toLocaleDateString(locale) }} —
+          {{ new Date(selected.period_end).toLocaleDateString(locale) }}
+        </p>
+      </header>
+      <div class="journal-contents">
+        <header>
+          <p class="eyebrow">CONTENTS</p>
+          <h3>Содержание</h3>
+        </header>
+        <ol>
+          <li v-for="(item, index) in publications" :key="item.id">
+            <RouterLink :to="`/publications/${item.id}`">
+              <span>{{ String(index + 1).padStart(2, '0') }}</span>
+              <div>
+                <small>{{ item.category_slug }}</small
+                ><strong>{{ item.title }}</strong>
+              </div>
+              <i aria-hidden="true">→</i>
+            </RouterLink>
+          </li>
+        </ol>
+      </div>
+      <div class="journal-pages">
+        <RouterLink
+          v-for="(item, index) in publications"
+          :key="item.id"
+          :to="`/publications/${item.id}`"
+        >
+          <span>СТР. {{ String(index + 1).padStart(2, '0') }}</span>
+          <small>{{ item.category_slug }}</small>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.summary }}</p>
+          <strong>Читать материал →</strong>
+        </RouterLink>
+      </div>
+      <nav class="journal-pagination" aria-label="Переход между выпусками">
+        <button
+          v-if="previousIssue"
+          class="button button-secondary"
+          @click="openIssue(previousIssue)"
+        >
+          ← Предыдущий выпуск
+        </button>
+        <span v-else />
+        <button v-if="nextIssue" class="button button-secondary" @click="openIssue(nextIssue)">
+          Следующий выпуск →
+        </button>
+      </nav>
+    </section>
+  </section>
+</template>

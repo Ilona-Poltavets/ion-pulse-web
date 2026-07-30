@@ -61,6 +61,12 @@ async function submit(): Promise<void> {
       <button class="button button-primary" :disabled="auth.isLoading">
         {{ auth.isLoading ? 'Подождите…' : mode === 'register' ? 'Зарегистрироваться' : 'Войти' }}
       </button>
+      <RouterLink v-if="mode === 'login'" class="auth-link" to="/password-reset">
+        Не помните пароль?
+      </RouterLink>
+      <RouterLink v-if="mode === 'login'" class="auth-link" to="/sanction-appeal">
+        Обжаловать блокировку
+      </RouterLink>
       <RouterLink class="auth-link" :to="mode === 'register' ? '/login' : '/register'">{{
         mode === 'register' ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Создать'
       }}</RouterLink>

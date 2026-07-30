@@ -1,7 +1,7 @@
 # Ion Pulse
 
-Словарь предметной области двуязычной игровой медиаплатформы. Термины ниже
-используются одинаково в продуктовых текстах, задачах, API и интерфейсе.
+Domain glossary for the bilingual gaming media platform. The terms below are
+used consistently in product copy, tasks, the API, and the interface.
 
 ## Люди и доступ
 
