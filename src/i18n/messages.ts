@@ -85,6 +85,8 @@ export const messages = {
       searchAction: 'Найти',
       loadMore: 'Показать ещё',
       loadingMore: 'Загрузка…',
+      author: 'Автор: {name}', subscribeAuthor: 'Подписаться на автора', unsubscribeAuthor: 'Отписаться от автора', game: 'Игра: {title}', authorScore: 'Оценка автора: {score}/10',
+      weeklyStories: 'Материалы недели', editTranslation: 'Редактировать перевод →', reportStory: 'Пожаловаться на материал', ratingLabel: 'Оценка публикации', replyToComment: 'Ответ на комментарий', cancel: 'Отмена', reply: 'Ответить', report: 'Пожаловаться', reportTitle: 'Жалоба', reportReason: 'Опишите причину', subscriptionError: 'Не удалось обновить подписку', reportError: 'Не удалось отправить жалобу',
     },
     footer: {
       tagline: 'One story. Two audiences.',
@@ -195,6 +197,8 @@ export const messages = {
       searchAction: 'Search',
       loadMore: 'Show more',
       loadingMore: 'Loading…',
+      author: 'Author: {name}', subscribeAuthor: 'Subscribe to author', unsubscribeAuthor: 'Unsubscribe from author', game: 'Game: {title}', authorScore: 'Author score: {score}/10',
+      weeklyStories: 'Stories of the week', editTranslation: 'Edit translation →', reportStory: 'Report story', ratingLabel: 'Publication rating', replyToComment: 'Replying to a comment', cancel: 'Cancel', reply: 'Reply', report: 'Report', reportTitle: 'Report', reportReason: 'Describe the reason', subscriptionError: 'Could not update subscription', reportError: 'Could not send report',
     },
     footer: {
       tagline: 'One story. Two audiences.',

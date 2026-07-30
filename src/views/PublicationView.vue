@@ -140,7 +140,7 @@ async function toggleAuthorSubscription(): Promise<void> {
       })
     }
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Не удалось обновить подписку'
+    error.value = caught instanceof Error ? caught.message : t('publications.subscriptionError')
   }
 }
 
@@ -193,7 +193,7 @@ async function submitReport(): Promise<void> {
     reportReason.value = ''
     reportTarget.value = null
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Не удалось отправить жалобу'
+    error.value = caught instanceof Error ? caught.message : t('publications.reportError')
   }
 }
 
@@ -228,20 +228,20 @@ watch(
         <span>{{ new Date(publication.published_at).toLocaleDateString(locale) }}</span>
       </div>
       <div class="publication-author">
-        <span>Автор: {{ publication.author_name }}</span>
+        <span>{{ t('publications.author', { name: publication.author_name }) }}</span>
         <button
           v-if="canManageAuthorSubscription"
           class="button button-secondary"
           type="button"
           @click="toggleAuthorSubscription"
         >
-          {{ isSubscribedToAuthor ? 'Отписаться от автора' : 'Подписаться на автора' }}
+          {{ isSubscribedToAuthor ? t('publications.unsubscribeAuthor') : t('publications.subscribeAuthor') }}
         </button>
       </div>
       <p v-if="reviewGame || publication.review_score !== null" class="publication-review-meta">
-        <span v-if="reviewGame">Игра: {{ reviewGame.title }}</span>
+        <span v-if="reviewGame">{{ t('publications.game', { title: reviewGame.title }) }}</span>
         <span v-if="publication.review_score !== null"
-          >Оценка автора: {{ publication.review_score }}/10</span
+          >{{ t('publications.authorScore', { score: publication.review_score }) }}</span
         >
       </p>
       <h1>{{ publication.title }}</h1>
@@ -250,8 +250,8 @@ watch(
         {{ t('publications.translationFallback', { locale: publication.locale.toUpperCase() }) }}
       </p>
       <div class="publication-body">{{ publication.body }}</div>
-      <section v-if="digestItems.length" class="digest-items" aria-label="Материалы дайджеста">
-        <h2>Материалы недели</h2>
+      <section v-if="digestItems.length" class="digest-items" :aria-label="t('publications.weeklyStories')">
+        <h2>{{ t('publications.weeklyStories') }}</h2>
         <RouterLink v-for="item in digestItems" :key="item.id" :to="`/publications/${item.id}`">
           <small>{{ item.category_slug }}</small
           ><strong>{{ item.title }}</strong
@@ -266,17 +266,17 @@ watch(
         class="text-link localization-link"
         :to="`/editorial/localizations/${publication.id}/${publication.locale}`"
       >
-        Редактировать перевод →
+        {{ t('publications.editTranslation') }}
       </RouterLink>
       <button
         class="report-button"
         type="button"
         @click="reportTarget = { type: 'publication', id: publication.id }"
       >
-        Пожаловаться на материал
+        {{ t('publications.reportStory') }}
       </button>
 
-      <section class="rating-panel" aria-label="Оценка публикации">
+      <section class="rating-panel" :aria-label="t('publications.ratingLabel')">
         <strong>{{ t('publications.rate') }}</strong>
         <div class="rating-buttons">
           <button
@@ -296,8 +296,8 @@ watch(
         <h2 id="comments-title">{{ t('publications.comments') }}</h2>
         <form class="comment-form" @submit.prevent="submitComment">
           <p v-if="replyTo" class="reply-indicator">
-            Ответ на комментарий
-            <button type="button" @click="replyTo = null">Отмена</button>
+            {{ t('publications.replyToComment') }}
+            <button type="button" @click="replyTo = null">{{ t('publications.cancel') }}</button>
           </p>
           <textarea
             v-model.trim="commentBody"
@@ -314,14 +314,14 @@ watch(
             <small>{{ new Date(comment.created_at).toLocaleString(locale) }}</small>
             <p>{{ comment.body }}</p>
             <button class="reply-button" type="button" @click="replyTo = comment.id">
-              Ответить
+              {{ t('publications.reply') }}
             </button>
             <button
               class="report-button"
               type="button"
               @click="reportTarget = { type: 'comment', id: comment.id }"
             >
-              Пожаловаться
+              {{ t('publications.report') }}
             </button>
             <ol v-if="repliesFor(comment.id).length" class="reply-list">
               <li v-for="reply in repliesFor(comment.id)" :key="reply.id">
@@ -332,7 +332,7 @@ watch(
                   type="button"
                   @click="reportTarget = { type: 'comment', id: reply.id }"
                 >
-                  Пожаловаться
+                  {{ t('publications.report') }}
                 </button>
               </li>
             </ol>
@@ -340,18 +340,18 @@ watch(
         </ol>
       </section>
       <form v-if="reportTarget" class="report-form" @submit.prevent="submitReport">
-        <strong>Жалоба</strong>
+        <strong>{{ t('publications.reportTitle') }}</strong>
         <textarea
           v-model.trim="reportReason"
           required
           minlength="10"
           maxlength="1000"
-          placeholder="Опишите причину"
+          :placeholder="t('publications.reportReason')"
         />
         <div class="editor-actions">
-          <button class="button button-primary">Отправить</button>
+          <button class="button button-primary">{{ t('publications.send') }}</button>
           <button class="button button-secondary" type="button" @click="reportTarget = null">
-            Отмена
+            {{ t('publications.cancel') }}
           </button>
         </div>
       </form>
