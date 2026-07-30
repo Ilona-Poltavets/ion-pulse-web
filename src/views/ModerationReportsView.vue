@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 import {
   listOpenReports,
   listHiddenComments,
@@ -18,6 +19,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { locale, t } = useI18n()
 const reports = ref<ContentReport[]>([])
 const notes = ref<Record<string, string>>({})
 const suspensionEnds = ref<Record<string, string>>({})
@@ -44,14 +46,14 @@ onMounted(async () => {
       listHiddenComments(),
     ])
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось загрузить жалобы'
+    message.value = error instanceof Error ? error.message : t('moderation.loadError')
   }
 })
 
 async function decide(report: ContentReport, status: 'resolved' | 'dismissed'): Promise<void> {
   const reviewNote = notes.value[report.id]?.trim()
   if (!reviewNote) {
-    message.value = 'Добавьте комментарий к решению'
+    message.value = t('moderation.noteRequired')
     return
   }
   try {
@@ -60,7 +62,7 @@ async function decide(report: ContentReport, status: 'resolved' | 'dismissed'): 
     reports.value = reports.value.filter((item) => item.id !== report.id)
     expandedId.value = null
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось сохранить решение'
+    message.value = error instanceof Error ? error.message : t('moderation.saveError')
   } finally {
     isSaving.value = false
   }
@@ -72,23 +74,23 @@ async function decideAppeal(
 ): Promise<void> {
   const reviewNote = appealNotes.value[appeal.id]?.trim()
   if (!reviewNote) {
-    message.value = 'Добавьте причину решения по обращению'
+    message.value = t('moderation.appealNoteRequired')
     return
   }
   try {
     await decideSanctionAppeal(appeal.id, { status, review_note: reviewNote })
     appeals.value = appeals.value.filter((item) => item.id !== appeal.id)
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось рассмотреть обращение'
+    message.value = error instanceof Error ? error.message : t('moderation.appealError')
   }
 }
 
 async function hideComment(report: ContentReport): Promise<void> {
   try {
     await updateCommentVisibility(report.target_id, true)
-    message.value = 'Комментарий скрыт'
+    message.value = t('moderation.commentHidden')
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось скрыть комментарий'
+    message.value = error instanceof Error ? error.message : t('moderation.hideError')
   }
 }
 
@@ -96,9 +98,9 @@ async function restoreComment(comment: ModeratedComment): Promise<void> {
   try {
     await updateCommentVisibility(comment.id, false)
     hiddenComments.value = hiddenComments.value.filter((item) => item.id !== comment.id)
-    message.value = 'Комментарий восстановлен'
+    message.value = t('moderation.commentRestored')
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось восстановить комментарий'
+    message.value = error instanceof Error ? error.message : t('moderation.restoreError')
   }
 }
 
@@ -106,7 +108,7 @@ async function suspendTarget(report: ContentReport): Promise<void> {
   const expiresAt = suspensionEnds.value[report.id]
   const reason = notes.value[report.id]?.trim()
   if (!report.target_author_id || !expiresAt || !reason) {
-    message.value = 'Укажите комментарий к решению и срок блокировки'
+    message.value = t('moderation.suspensionDetailsRequired')
     return
   }
   try {
@@ -114,9 +116,9 @@ async function suspendTarget(report: ContentReport): Promise<void> {
       reason,
       expires_at: new Date(expiresAt).toISOString(),
     })
-    message.value = 'Участник временно заблокирован, его сессии отозваны'
+    message.value = t('moderation.suspended')
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось применить санкцию'
+    message.value = error instanceof Error ? error.message : t('moderation.suspensionError')
   }
 }
 </script>
@@ -125,13 +127,13 @@ async function suspendTarget(report: ContentReport): Promise<void> {
   <section class="editorial-page">
     <header class="queue-header">
       <div>
-        <p class="eyebrow">MODERATION QUEUE</p>
-        <h1>Жалобы</h1>
+        <p class="eyebrow">{{ t('moderation.eyebrow') }}</p>
+        <h1>{{ t('moderation.title') }}</h1>
       </div>
-      <span>{{ reports.length }} требуют разбора</span>
+      <span>{{ t('moderation.reviewCount', { count: reports.length }) }}</span>
     </header>
     <p v-if="message" class="dashboard-message">{{ message }}</p>
-    <p v-if="!reports.length" class="empty-state">Открытых жалоб нет.</p>
+    <p v-if="!reports.length" class="empty-state">{{ t('moderation.emptyReports') }}</p>
     <div v-else class="queue-list">
       <article
         v-for="report in reports"
@@ -146,10 +148,10 @@ async function suspendTarget(report: ContentReport): Promise<void> {
         >
           <div>
             <p class="eyebrow">
-              {{ report.target_type }} · {{ new Date(report.created_at).toLocaleString() }}
+              {{ report.target_type }} · {{ new Date(report.created_at).toLocaleString(locale) }}
             </p>
             <h2>
-              Жалоба на {{ report.target_type === 'publication' ? 'материал' : 'комментарий' }}
+              {{ t('moderation.reportOn', { target: report.target_type === 'publication' ? t('moderation.publication') : t('moderation.comment') }) }}
             </h2>
             <p>{{ report.reason }}</p>
           </div>
@@ -158,9 +160,9 @@ async function suspendTarget(report: ContentReport): Promise<void> {
         <div v-if="expandedId === report.id" class="queue-detail">
           <p v-if="report.target_excerpt" class="report-excerpt">{{ report.target_excerpt }}</p>
           <label
-            >Комментарий к решению<textarea
+            >{{ t('moderation.decisionNote') }}<textarea
               v-model="notes[report.id]"
-              placeholder="Объясните принятое решение"
+              :placeholder="t('moderation.decisionNotePlaceholder')"
               required
             />
           </label>
@@ -170,14 +172,14 @@ async function suspendTarget(report: ContentReport): Promise<void> {
               :disabled="isSaving"
               @click="decide(report, 'resolved')"
             >
-              Принять
+              {{ t('moderation.accept') }}
             </button>
             <button
               class="button button-secondary"
               :disabled="isSaving"
               @click="decide(report, 'dismissed')"
             >
-              Отклонить
+              {{ t('moderation.dismiss') }}
             </button>
             <button
               v-if="report.target_type === 'comment'"
@@ -185,19 +187,19 @@ async function suspendTarget(report: ContentReport): Promise<void> {
               :disabled="isSaving"
               @click="hideComment(report)"
             >
-              Скрыть комментарий
+              {{ t('moderation.hideComment') }}
             </button>
           </div>
           <div v-if="report.target_author_id" class="schedule-controls">
             <label
-              >Заблокировать до<input v-model="suspensionEnds[report.id]" type="datetime-local"
+              >{{ t('moderation.suspendUntil') }}<input v-model="suspensionEnds[report.id]" type="datetime-local"
             /></label>
             <button
               class="button button-secondary"
               :disabled="isSaving"
               @click="suspendTarget(report)"
             >
-              Временно заблокировать автора
+              {{ t('moderation.suspendAuthor') }}
             </button>
           </div>
         </div>
@@ -206,21 +208,21 @@ async function suspendTarget(report: ContentReport): Promise<void> {
     <section class="queue-list">
       <header class="queue-header">
         <div>
-          <p class="eyebrow">SANCTION APPEALS</p>
-          <h2>Обжалования</h2>
+          <p class="eyebrow">{{ t('moderation.appealsEyebrow') }}</p>
+          <h2>{{ t('moderation.appealsTitle') }}</h2>
         </div>
-        <span>{{ appeals.length }} открытых</span>
+        <span>{{ t('moderation.openCount', { count: appeals.length }) }}</span>
       </header>
-      <p v-if="!appeals.length" class="empty-state">Открытых обращений нет.</p>
+      <p v-if="!appeals.length" class="empty-state">{{ t('moderation.emptyAppeals') }}</p>
       <article v-for="appeal in appeals" :key="appeal.id" class="queue-card expanded">
         <div class="queue-detail">
           <p>{{ appeal.reason }}</p>
-          <label>Причина решения<textarea v-model="appealNotes[appeal.id]" required /></label>
+          <label>{{ t('moderation.appealDecisionReason') }}<textarea v-model="appealNotes[appeal.id]" required /></label>
           <div class="editor-actions">
             <button class="button button-primary" @click="decideAppeal(appeal, 'approved')">
-              Одобрить и снять блокировку</button
+              {{ t('moderation.approveAppeal') }}</button
             ><button class="button button-secondary" @click="decideAppeal(appeal, 'rejected')">
-              Отклонить
+              {{ t('moderation.rejectAppeal') }}
             </button>
           </div>
         </div>
@@ -229,19 +231,19 @@ async function suspendTarget(report: ContentReport): Promise<void> {
     <section class="queue-list">
       <header class="queue-header">
         <div>
-          <p class="eyebrow">HIDDEN COMMENTS</p>
-          <h2>Скрытые комментарии</h2>
+          <p class="eyebrow">{{ t('moderation.hiddenEyebrow') }}</p>
+          <h2>{{ t('moderation.hiddenTitle') }}</h2>
         </div>
-        <span>{{ hiddenComments.length }} скрыты</span>
+        <span>{{ t('moderation.hiddenCount', { count: hiddenComments.length }) }}</span>
       </header>
-      <p v-if="!hiddenComments.length" class="empty-state">Скрытых комментариев нет.</p>
+      <p v-if="!hiddenComments.length" class="empty-state">{{ t('moderation.emptyHidden') }}</p>
       <article v-for="comment in hiddenComments" :key="comment.id" class="queue-card expanded">
         <div class="queue-detail">
           <p class="report-excerpt">{{ comment.body }}</p>
-          <small>Скрыт комментарий к материалу {{ comment.publication_id }}</small>
+          <small>{{ t('moderation.hiddenCommentFor', { publication: comment.publication_id }) }}</small>
           <div class="editor-actions">
             <button class="button button-secondary" @click="restoreComment(comment)">
-              Восстановить комментарий
+              {{ t('moderation.restoreComment') }}
             </button>
           </div>
         </div>
