@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 import {
   createDraft,
   listCategories,
@@ -22,6 +23,7 @@ import {
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+const { locale, t } = useI18n()
 const draftId = typeof route.params.id === 'string' ? route.params.id : null
 const draft = ref<DraftCreatePayload>({
   category_slug: 'reviews',
@@ -79,7 +81,7 @@ onMounted(async () => {
   try {
     const existing = (await listMyDrafts()).find((item) => item.id === draftId)
     if (!existing) {
-      message.value = 'Черновик не найден или недоступен для редактирования'
+      message.value = t('editor.draftUnavailable')
       return
     }
     applyDraft(existing)
@@ -89,7 +91,7 @@ onMounted(async () => {
     revisions.value = await listPublicationRevisions(draftId)
     isReadyForAutosave.value = true
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось загрузить черновик'
+    message.value = error instanceof Error ? error.message : t('editor.loadError')
   }
 })
 
@@ -128,9 +130,9 @@ async function restoreRevision(revisionNumber: number): Promise<void> {
     skipNextAutosave.value = true
     applyDraft(restored)
     revisions.value = await listPublicationRevisions(draftId)
-    message.value = `Восстановлена версия ${revisionNumber}`
+    message.value = t('editor.revisionRestored', { number: revisionNumber })
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось восстановить версию'
+    message.value = error instanceof Error ? error.message : t('editor.restoreError')
   }
 }
 
@@ -153,7 +155,7 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
       })
     } else {
       if (draft.value.content_type === 'digest' && !selectedDigestItemIds.value.length) {
-        message.value = 'Добавьте хотя бы один материал в дайджест'
+        message.value = t('editor.digestRequired')
         return
       }
       const created = await createDraft(draft.value)
@@ -165,9 +167,9 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
       await replaceDigestItems(draftId, selectedDigestItemIds.value)
     }
     if (returnToProfile) await router.push('/profile')
-    else message.value = 'Черновик сохранён автоматически'
+    else message.value = t('editor.autoSaved')
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось сохранить черновик'
+    message.value = error instanceof Error ? error.message : t('editor.saveError')
   }
 }
 </script>
@@ -175,50 +177,50 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
   <section class="editor-page">
     <header class="editor-header">
       <div>
-        <p class="eyebrow">{{ draftId ? 'EDIT DRAFT' : 'NEW PUBLICATION' }}</p>
-        <h1>{{ draftId ? 'Редактирование материала' : 'Новый материал' }}</h1>
+        <p class="eyebrow">{{ draftId ? t('editor.editEyebrow') : t('editor.newEyebrow') }}</p>
+        <h1>{{ draftId ? t('editor.editTitle') : t('editor.newTitle') }}</h1>
       </div>
       <div class="editor-status">
         <span></span
-        >{{ message || (draftId ? 'Автосохранение включено' : 'Черновик ещё не сохранён') }}
+        >{{ message || (draftId ? t('editor.autosaveEnabled') : t('editor.unsavedDraft')) }}
       </div>
     </header>
     <div class="editor-layout">
       <form class="editor-form" @submit.prevent="save">
         <div class="editor-meta-fields">
           <label
-            >Категория<select v-model="draft.category_slug">
+            >{{ t('editor.category') }}<select v-model="draft.category_slug">
               <option v-for="category in categories" :key="category.slug" :value="category.slug">
                 {{ category.name }}
               </option>
             </select></label
           >
           <label
-            >Язык<select v-model="draft.source_locale" :disabled="Boolean(draftId)">
-              <option value="ru">Русский</option>
+            >{{ t('editor.language') }}<select v-model="draft.source_locale" :disabled="Boolean(draftId)">
+              <option value="ru">{{ t('editor.russian') }}</option>
               <option value="en">English</option>
             </select></label
           >
           <label
-            >Тип материала<select v-model="draft.content_type">
-              <option value="article">Статья</option>
-              <option value="review">Ревью</option>
-              <option value="news">Новость</option>
-              <option value="guide">Гайд</option>
-              <option v-if="canCreateDigest" value="digest">Дайджест</option>
+            >{{ t('editor.contentType') }}<select v-model="draft.content_type">
+              <option value="article">{{ t('editor.types.article') }}</option>
+              <option value="review">{{ t('editor.types.review') }}</option>
+              <option value="news">{{ t('editor.types.news') }}</option>
+              <option value="guide">{{ t('editor.types.guide') }}</option>
+              <option v-if="canCreateDigest" value="digest">{{ t('editor.types.digest') }}</option>
             </select></label
           >
           <template v-if="draft.content_type === 'review'">
             <label
-              >Игра<select v-model="draft.game_id">
-                <option :value="null">Не привязывать игру</option>
+              >{{ t('editor.game') }}<select v-model="draft.game_id">
+                <option :value="null">{{ t('editor.noGame') }}</option>
                 <option v-for="game in games" :key="game.id" :value="game.id">
                   {{ game.title }}
                 </option>
               </select></label
             >
             <label
-              >Оценка автора (0–10)<input
+              >{{ t('editor.authorScore') }}<input
                 v-model.number="draft.review_score"
                 type="number"
                 min="0"
@@ -228,7 +230,7 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
             </label>
           </template>
           <fieldset v-if="draft.content_type === 'digest'" class="digest-selector">
-            <legend>Материалы дайджеста</legend>
+            <legend>{{ t('editor.digestItems') }}</legend>
             <label v-for="candidate in digestCandidates" :key="candidate.id" class="checkbox-label">
               <input v-model="selectedDigestItemIds" type="checkbox" :value="candidate.id" />
               <span
@@ -239,40 +241,40 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
           </fieldset>
         </div>
         <label class="editor-title-field"
-          >Заголовок<input
+          >{{ t('editor.headline') }}<input
             v-model.trim="draft.title"
             required
             minlength="5"
-            placeholder="Сильный заголовок для материала"
+            :placeholder="t('editor.headlinePlaceholder')"
         /></label>
         <label
-          >Анонс<textarea
+          >{{ t('editor.summary') }}<textarea
             v-model.trim="draft.summary"
             required
             minlength="20"
-            placeholder="Коротко объясните, о чём этот материал"
+            :placeholder="t('editor.summaryPlaceholder')"
           />
         </label>
         <label class="editor-body-field"
-          >Текст<textarea
+          >{{ t('editor.body') }}<textarea
             v-model.trim="draft.body"
             required
             minlength="50"
-            placeholder="Начните писать…"
+            :placeholder="t('editor.bodyPlaceholder')"
           />
         </label>
         <div class="editor-footer">
-          <small>{{ wordCount }} слов · минимум 50 символов</small>
+          <small>{{ t('editor.wordCount', { count: wordCount }) }}</small>
           <div class="editor-actions">
             <button
               class="button button-secondary"
               type="button"
               @click="isPreviewVisible = !isPreviewVisible"
             >
-              {{ isPreviewVisible ? 'Скрыть предпросмотр' : 'Предпросмотр' }}
+              {{ isPreviewVisible ? t('editor.hidePreview') : t('editor.preview') }}
             </button>
             <button class="button button-primary">
-              {{ draftId ? 'Сохранить и выйти' : 'Создать черновик' }}
+              {{ draftId ? t('editor.saveAndExit') : t('editor.createDraft') }}
             </button>
           </div>
         </div>
@@ -280,22 +282,22 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
       <aside
         v-if="draftId && revisions.length"
         class="revision-history editor-revisions"
-        aria-label="История версий"
+        :aria-label="t('editor.revisionHistory')"
       >
-        <p class="eyebrow">REVISION HISTORY</p>
-        <h2>История версий</h2>
+        <p class="eyebrow">{{ t('editor.revisionsEyebrow') }}</p>
+        <h2>{{ t('editor.revisionHistory') }}</h2>
         <ol>
           <li v-for="revision in revisions" :key="revision.revision_number">
             <div>
-              <strong>Версия {{ revision.revision_number }}</strong
-              ><small>{{ new Date(revision.created_at).toLocaleString() }}</small>
+              <strong>{{ t('editor.version', { number: revision.revision_number }) }}</strong
+              ><small>{{ new Date(revision.created_at).toLocaleString(locale) }}</small>
             </div>
             <button
               class="button button-secondary"
               type="button"
               @click="restoreRevision(revision.revision_number)"
             >
-              Восстановить
+              {{ t('editor.restore') }}
             </button>
           </li>
         </ol>
@@ -303,18 +305,18 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
     </div>
     <section v-if="isPreviewVisible" class="draft-preview" aria-labelledby="preview-title">
       <div class="preview-heading">
-        <p class="eyebrow">PUBLICATION PREVIEW</p>
+        <p class="eyebrow">{{ t('editor.previewEyebrow') }}</p>
         <button class="account-link" type="button" @click="isPreviewVisible = false">
-          Закрыть
+          {{ t('editor.close') }}
         </button>
       </div>
       <p class="publication-card-meta">
         <span>{{ draft.category_slug }}</span
         ><span>{{ draft.source_locale.toUpperCase() }}</span>
       </p>
-      <h1 id="preview-title">{{ draft.title || 'Заголовок материала' }}</h1>
-      <p class="publication-summary">{{ draft.summary || 'Анонс материала появится здесь.' }}</p>
-      <div class="publication-body">{{ draft.body || 'Текст материала появится здесь.' }}</div>
+      <h1 id="preview-title">{{ draft.title || t('editor.previewHeadline') }}</h1>
+      <p class="publication-summary">{{ draft.summary || t('editor.previewSummary') }}</p>
+      <div class="publication-body">{{ draft.body || t('editor.previewBody') }}</div>
     </section>
   </section>
 </template>

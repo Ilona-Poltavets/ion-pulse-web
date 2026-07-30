@@ -128,6 +128,13 @@ export const messages = {
       aiStatuses: { pending: 'ожидает', reviewing: 'проверяется', completed: 'готово', failed: 'недоступно' },
       applicationStatuses: { pending: 'ожидает', approved: 'одобрена', rejected: 'отклонена' },
     },
+    editor: {
+      editEyebrow: 'Редактирование черновика', newEyebrow: 'Новый материал', editTitle: 'Редактирование материала', newTitle: 'Новый материал', autosaveEnabled: 'Автосохранение включено', unsavedDraft: 'Черновик ещё не сохранён',
+      category: 'Категория', language: 'Язык', russian: 'Русский', contentType: 'Тип материала', game: 'Игра', noGame: 'Не привязывать игру', authorScore: 'Оценка автора (0–10)', digestItems: 'Материалы дайджеста', headline: 'Заголовок', headlinePlaceholder: 'Сильный заголовок для материала', summary: 'Анонс', summaryPlaceholder: 'Коротко объясните, о чём этот материал', body: 'Текст', bodyPlaceholder: 'Начните писать…', wordCount: '{count} слов · минимум 50 символов',
+      preview: 'Предпросмотр', hidePreview: 'Скрыть предпросмотр', saveAndExit: 'Сохранить и выйти', createDraft: 'Создать черновик', revisionHistory: 'История версий', revisionsEyebrow: 'История версий', version: 'Версия {number}', restore: 'Восстановить', previewEyebrow: 'Предпросмотр материала', close: 'Закрыть', previewHeadline: 'Заголовок материала', previewSummary: 'Анонс материала появится здесь.', previewBody: 'Текст материала появится здесь.',
+      draftUnavailable: 'Черновик не найден или недоступен для редактирования', loadError: 'Не удалось загрузить черновик', revisionRestored: 'Восстановлена версия {number}', restoreError: 'Не удалось восстановить версию', digestRequired: 'Добавьте хотя бы один материал в дайджест', autoSaved: 'Черновик сохранён автоматически', saveError: 'Не удалось сохранить черновик',
+      types: { article: 'Статья', review: 'Ревью', news: 'Новость', guide: 'Гайд', digest: 'Дайджест' },
+    },
   },
   en: {
     navigation: {
@@ -258,6 +265,13 @@ export const messages = {
       publicationStatuses: { draft: 'Draft', changes_requested: 'Changes requested', editorial_review: 'In editorial review', scheduled: 'Scheduled', published: 'Published', archived: 'Archived', rejected: 'Rejected' },
       aiStatuses: { pending: 'pending', reviewing: 'in review', completed: 'ready', failed: 'unavailable' },
       applicationStatuses: { pending: 'pending', approved: 'approved', rejected: 'rejected' },
+    },
+    editor: {
+      editEyebrow: 'Edit draft', newEyebrow: 'New publication', editTitle: 'Edit material', newTitle: 'New material', autosaveEnabled: 'Autosave is on', unsavedDraft: 'This draft has not been saved yet',
+      category: 'Category', language: 'Language', russian: 'Russian', contentType: 'Material type', game: 'Game', noGame: 'Do not link a game', authorScore: 'Author score (0–10)', digestItems: 'Digest materials', headline: 'Headline', headlinePlaceholder: 'A strong headline for your material', summary: 'Summary', summaryPlaceholder: 'Briefly explain what this material is about', body: 'Body', bodyPlaceholder: 'Start writing…', wordCount: '{count} words · 50 characters minimum',
+      preview: 'Preview', hidePreview: 'Hide preview', saveAndExit: 'Save and exit', createDraft: 'Create draft', revisionHistory: 'Revision history', revisionsEyebrow: 'Revision history', version: 'Version {number}', restore: 'Restore', previewEyebrow: 'Publication preview', close: 'Close', previewHeadline: 'Material headline', previewSummary: 'The material summary will appear here.', previewBody: 'The material body will appear here.',
+      draftUnavailable: 'The draft was not found or is unavailable for editing', loadError: 'Could not load draft', revisionRestored: 'Restored version {number}', restoreError: 'Could not restore version', digestRequired: 'Add at least one material to the digest', autoSaved: 'Draft saved automatically', saveError: 'Could not save draft',
+      types: { article: 'Article', review: 'Review', news: 'News', guide: 'Guide', digest: 'Digest' },
     },
   },
 } as const
