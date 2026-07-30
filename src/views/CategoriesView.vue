@@ -3,9 +3,11 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { listManageableCategories, updateCategory, type ManagedCategory } from '@/services/api'
+import { useI18n } from 'vue-i18n'
 
 const auth = useAuthStore()
 const router = useRouter()
+const { t } = useI18n()
 const categories = ref<ManagedCategory[]>([])
 const message = ref('')
 
@@ -32,9 +34,9 @@ async function save(category: ManagedCategory): Promise<void> {
       sort_order: category.sort_order,
       is_visible: category.is_visible,
     })
-    message.value = 'Категория сохранена'
+    message.value = t('categoryManagement.saved')
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось сохранить категорию'
+    message.value = error instanceof Error ? error.message : t('categoryManagement.saveError')
   }
 }
 </script>
@@ -42,8 +44,8 @@ async function save(category: ManagedCategory): Promise<void> {
   <section class="editorial-page">
     <header class="queue-header">
       <div>
-        <p class="eyebrow">CONTENT MANAGEMENT</p>
-        <h1>Категории</h1>
+        <p class="eyebrow">{{ t('categoryManagement.eyebrow') }}</p>
+        <h1>{{ t('categoryManagement.title') }}</h1>
       </div>
     </header>
     <p v-if="message" class="dashboard-message">{{ message }}</p>
@@ -55,16 +57,16 @@ async function save(category: ManagedCategory): Promise<void> {
         @submit.prevent="save(category)"
       >
         <p class="eyebrow">{{ category.slug }}</p>
-        <label>Название (RU)<input v-model="category.name_ru" /></label>
-        <label>Название (EN)<input v-model="category.name_en" /></label>
-        <label>Описание (RU)<textarea v-model="category.description_ru" /></label>
-        <label>Описание (EN)<textarea v-model="category.description_en" /></label>
-        <label>Цвет<input v-model="category.color" pattern="#[0-9A-Fa-f]{6}" /></label>
-        <label>Порядок<input v-model.number="category.sort_order" type="number" min="0" /></label>
+        <label>{{ t('categoryManagement.nameRu') }}<input v-model="category.name_ru" /></label>
+        <label>{{ t('categoryManagement.nameEn') }}<input v-model="category.name_en" /></label>
+        <label>{{ t('categoryManagement.descriptionRu') }}<textarea v-model="category.description_ru" /></label>
+        <label>{{ t('categoryManagement.descriptionEn') }}<textarea v-model="category.description_en" /></label>
+        <label>{{ t('categoryManagement.color') }}<input v-model="category.color" pattern="#[0-9A-Fa-f]{6}" /></label>
+        <label>{{ t('categoryManagement.sortOrder') }}<input v-model.number="category.sort_order" type="number" min="0" /></label>
         <label class="checkbox-label">
-          <input v-model="category.is_visible" type="checkbox" /> Показывать в публичном каталоге
+          <input v-model="category.is_visible" type="checkbox" /> {{ t('categoryManagement.visible') }}
         </label>
-        <button class="button button-primary">Сохранить</button>
+        <button class="button button-primary">{{ t('categoryManagement.save') }}</button>
       </form>
     </div>
   </section>

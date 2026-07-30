@@ -141,6 +141,9 @@ export const messages = {
     adminUsers: {
       eyebrow: 'Управление доступом', title: 'Пользователи и роли', active: 'активен', inactive: 'деактивирован', auditEyebrow: 'Аудит ролей', auditTitle: 'История ролей', auditEmpty: 'Изменений ролей пока нет.', granted: 'Выдана', revoked: 'Отозвана', loadError: 'Не удалось загрузить пользователей', updateError: 'Не удалось обновить роли', roles: { author: 'Автор', editor: 'Редактор', moderator: 'Модератор', content_manager: 'Контент-менеджер', administrator: 'Администратор' },
     },
+    categoryManagement: {
+      eyebrow: 'Управление контентом', title: 'Категории', nameRu: 'Название (RU)', nameEn: 'Название (EN)', descriptionRu: 'Описание (RU)', descriptionEn: 'Описание (EN)', color: 'Цвет', sortOrder: 'Порядок', visible: 'Показывать в публичном каталоге', save: 'Сохранить', saved: 'Категория сохранена', saveError: 'Не удалось сохранить категорию',
+    },
   },
   en: {
     navigation: {
@@ -284,6 +287,9 @@ export const messages = {
     },
     adminUsers: {
       eyebrow: 'Access control', title: 'Users and roles', active: 'active', inactive: 'deactivated', auditEyebrow: 'Role audit', auditTitle: 'Role history', auditEmpty: 'There are no role changes yet.', granted: 'Granted', revoked: 'Revoked', loadError: 'Could not load users', updateError: 'Could not update roles', roles: { author: 'Author', editor: 'Editor', moderator: 'Moderator', content_manager: 'Content manager', administrator: 'Administrator' },
+    },
+    categoryManagement: {
+      eyebrow: 'Content management', title: 'Categories', nameRu: 'Name (RU)', nameEn: 'Name (EN)', descriptionRu: 'Description (RU)', descriptionEn: 'Description (EN)', color: 'Color', sortOrder: 'Sort order', visible: 'Show in the public catalog', save: 'Save', saved: 'Category saved', saveError: 'Could not save category',
     },
   },
 } as const
