@@ -3,9 +3,11 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { decidePublication, listEditorialQueue, type Draft } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 
 const auth = useAuthStore()
 const router = useRouter()
+const { t } = useI18n()
 const publications = ref<Draft[]>([])
 const notes = ref<Record<string, string>>({})
 const scheduledAt = ref<Record<string, string>>({})
@@ -26,7 +28,7 @@ onMounted(async () => {
     isSaving.value = true
     publications.value = await listEditorialQueue()
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось загрузить очередь'
+    message.value = error instanceof Error ? error.message : t('editorialQueue.loadError')
   }
 })
 
@@ -36,12 +38,12 @@ async function decide(
 ): Promise<void> {
   const note = notes.value[publication.id]?.trim()
   if (!note) {
-    message.value = 'Добавьте комментарий к редакционному решению'
+    message.value = t('editorialQueue.noteRequired')
     return
   }
   const scheduledValue = scheduledAt.value[publication.id]
   if (decision === 'schedule' && !scheduledValue) {
-    message.value = 'Укажите дату и время публикации'
+    message.value = t('editorialQueue.scheduleRequired')
     return
   }
   try {
@@ -53,7 +55,7 @@ async function decide(
     publications.value = publications.value.filter((item) => item.id !== publication.id)
     expandedId.value = null
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось сохранить решение'
+    message.value = error instanceof Error ? error.message : t('editorialQueue.saveError')
   } finally {
     isSaving.value = false
   }
@@ -64,13 +66,13 @@ async function decide(
   <section class="editorial-page">
     <header class="queue-header">
       <div>
-        <p class="eyebrow">EDITORIAL DESK</p>
-        <h1>Очередь редактора</h1>
+        <p class="eyebrow">{{ t('editorialQueue.eyebrow') }}</p>
+        <h1>{{ t('editorialQueue.title') }}</h1>
       </div>
-      <span>{{ publications.length }} ожидают решения</span>
+      <span>{{ t('editorialQueue.pendingCount', { count: publications.length }) }}</span>
     </header>
     <p v-if="message" class="dashboard-message">{{ message }}</p>
-    <p v-if="!publications.length" class="empty-state">Материалов на проверке нет.</p>
+    <p v-if="!publications.length" class="empty-state">{{ t('editorialQueue.empty') }}</p>
     <div v-else class="queue-list">
       <article
         v-for="publication in publications"
@@ -93,9 +95,9 @@ async function decide(
         <div v-if="expandedId === publication.id" class="queue-detail">
           <div class="publication-body">{{ publication.body }}</div>
           <label
-            >Комментарий для автора<textarea
+            >{{ t('editorialQueue.note') }}<textarea
               v-model="notes[publication.id]"
-              placeholder="Объясните решение"
+              :placeholder="t('editorialQueue.notePlaceholder')"
               required
             />
           </label>
@@ -105,26 +107,26 @@ async function decide(
               :disabled="isSaving"
               @click="decide(publication, 'publish')"
             >
-              Опубликовать
+              {{ t('editorialQueue.publish') }}
             </button>
             <button
               class="button button-secondary"
               :disabled="isSaving"
               @click="decide(publication, 'request_changes')"
             >
-              На доработку
+              {{ t('editorialQueue.requestChanges') }}
             </button>
             <button
               class="button button-secondary"
               :disabled="isSaving"
               @click="decide(publication, 'reject')"
             >
-              Отклонить
+              {{ t('editorialQueue.reject') }}
             </button>
           </div>
           <div class="schedule-controls">
             <label
-              >Запланировать публикацию<input
+              >{{ t('editorialQueue.scheduleLabel') }}<input
                 v-model="scheduledAt[publication.id]"
                 type="datetime-local"
             /></label>
@@ -133,7 +135,7 @@ async function decide(
               :disabled="isSaving"
               @click="decide(publication, 'schedule')"
             >
-              Запланировать
+              {{ t('editorialQueue.schedule') }}
             </button>
           </div>
         </div>

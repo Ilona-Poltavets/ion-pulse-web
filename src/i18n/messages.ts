@@ -147,6 +147,9 @@ export const messages = {
     localizationEditor: {
       eyebrow: 'Ручная локализация', title: 'Редактура перевода', backToPublication: 'К материалу', metadata: '{locale} · источник: {origin} · ревизия оригинала {revision}', headline: 'Заголовок', summary: 'Анонс', body: 'Текст', saving: 'Сохраняем…', save: 'Сохранить перевод', saved: 'Перевод сохранён как ручная редактура', loadError: 'Не удалось загрузить перевод', saveError: 'Не удалось сохранить перевод',
     },
+    editorialQueue: {
+      eyebrow: 'Редакционный стол', title: 'Очередь редактора', pendingCount: '{count} ожидают решения', empty: 'Материалов на проверке нет.', note: 'Комментарий для автора', notePlaceholder: 'Объясните решение', publish: 'Опубликовать', requestChanges: 'На доработку', reject: 'Отклонить', scheduleLabel: 'Запланировать публикацию', schedule: 'Запланировать', loadError: 'Не удалось загрузить очередь', noteRequired: 'Добавьте комментарий к редакционному решению', scheduleRequired: 'Укажите дату и время публикации', saveError: 'Не удалось сохранить решение',
+    },
   },
   en: {
     navigation: {
@@ -296,6 +299,9 @@ export const messages = {
     },
     localizationEditor: {
       eyebrow: 'Human localization', title: 'Edit translation', backToPublication: 'Back to publication', metadata: '{locale} · source: {origin} · original revision {revision}', headline: 'Headline', summary: 'Summary', body: 'Body', saving: 'Saving…', save: 'Save translation', saved: 'Translation saved as a manual edit', loadError: 'Could not load translation', saveError: 'Could not save translation',
+    },
+    editorialQueue: {
+      eyebrow: 'Editorial desk', title: 'Editorial queue', pendingCount: '{count} awaiting a decision', empty: 'There are no materials in review.', note: 'Note for the author', notePlaceholder: 'Explain the decision', publish: 'Publish', requestChanges: 'Request changes', reject: 'Reject', scheduleLabel: 'Schedule publication', schedule: 'Schedule', loadError: 'Could not load editorial queue', noteRequired: 'Add a note to the editorial decision', scheduleRequired: 'Set the publication date and time', saveError: 'Could not save the decision',
     },
   },
 } as const
