@@ -77,7 +77,8 @@ async function publish(): Promise<void> {
     </header>
     <form class="dashboard-card" @submit.prevent="publish">
       <label
-        >{{ t('journalCandidates.issueLabel') }}<input v-model.trim="title" required minlength="5" maxlength="240"
+        >{{ t('journalCandidates.issueLabel')
+        }}<input v-model.trim="title" required minlength="5" maxlength="240"
       /></label>
       <button class="button button-primary">{{ t('journalCandidates.publish') }}</button>
     </form>
@@ -97,11 +98,11 @@ async function publish(): Promise<void> {
         <div class="candidate-score">
           <strong>{{ candidate.score.toFixed(1) }}</strong
           ><small
-            >★ {{ candidate.average_rating.toFixed(1) }} ·
-            {{ candidate.comment_count }} {{ t('journalCandidates.comments') }}</small
-          ><RouterLink class="text-link" :to="`/publications/${candidate.id}`"
-            >{{ t('journalCandidates.open') }}</RouterLink
-          >
+            >★ {{ candidate.average_rating.toFixed(1) }} · {{ candidate.comment_count }}
+            {{ t('journalCandidates.comments') }}</small
+          ><RouterLink class="text-link" :to="`/publications/${candidate.id}`">{{
+            t('journalCandidates.open')
+          }}</RouterLink>
         </div>
       </li>
     </ol>

@@ -36,14 +36,11 @@ async function submit(): Promise<void> {
       <p class="eyebrow">{{ t('auth.account') }}</p>
       <h1>{{ mode === 'register' ? t('auth.registerTitle') : t('auth.loginTitle') }}</h1>
       <p>
-        {{
-          mode === 'register'
-            ? t('auth.registerIntro')
-            : t('auth.loginIntro')
-        }}
+        {{ mode === 'register' ? t('auth.registerIntro') : t('auth.loginIntro') }}
       </p>
       <label v-if="mode === 'register'"
-        >{{ t('auth.displayName') }}<input
+        >{{ t('auth.displayName')
+        }}<input
           v-model.trim="displayName"
           required
           minlength="2"
@@ -52,7 +49,8 @@ async function submit(): Promise<void> {
       /></label>
       <label>Email<input v-model.trim="email" required type="email" autocomplete="email" /></label>
       <label
-        >{{ t('auth.password') }}<input
+        >{{ t('auth.password')
+        }}<input
           v-model="password"
           required
           type="password"
@@ -61,7 +59,13 @@ async function submit(): Promise<void> {
       /></label>
       <p v-if="error" class="form-error">{{ error }}</p>
       <button class="button button-primary" :disabled="auth.isLoading">
-        {{ auth.isLoading ? t('auth.pleaseWait') : mode === 'register' ? t('auth.registerAction') : t('auth.loginAction') }}
+        {{
+          auth.isLoading
+            ? t('auth.pleaseWait')
+            : mode === 'register'
+              ? t('auth.registerAction')
+              : t('auth.loginAction')
+        }}
       </button>
       <RouterLink v-if="mode === 'login'" class="auth-link" to="/password-reset">
         {{ t('auth.forgotPassword') }}

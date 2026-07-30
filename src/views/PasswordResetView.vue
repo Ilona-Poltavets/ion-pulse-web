@@ -61,7 +61,8 @@ async function submit(): Promise<void> {
       </label>
       <template v-else>
         <label>
-          {{ t('auth.newPassword') }}<input
+          {{ t('auth.newPassword')
+          }}<input
             v-model="password"
             required
             type="password"
@@ -70,7 +71,8 @@ async function submit(): Promise<void> {
           />
         </label>
         <label>
-          {{ t('auth.confirmPassword') }}<input
+          {{ t('auth.confirmPassword')
+          }}<input
             v-model="confirmation"
             required
             type="password"

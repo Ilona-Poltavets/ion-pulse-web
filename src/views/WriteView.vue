@@ -189,20 +189,23 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
       <form class="editor-form" @submit.prevent="save">
         <div class="editor-meta-fields">
           <label
-            >{{ t('editor.category') }}<select v-model="draft.category_slug">
+            >{{ t('editor.category')
+            }}<select v-model="draft.category_slug">
               <option v-for="category in categories" :key="category.slug" :value="category.slug">
                 {{ category.name }}
               </option>
             </select></label
           >
           <label
-            >{{ t('editor.language') }}<select v-model="draft.source_locale" :disabled="Boolean(draftId)">
+            >{{ t('editor.language')
+            }}<select v-model="draft.source_locale" :disabled="Boolean(draftId)">
               <option value="ru">{{ t('editor.russian') }}</option>
               <option value="en">English</option>
             </select></label
           >
           <label
-            >{{ t('editor.contentType') }}<select v-model="draft.content_type">
+            >{{ t('editor.contentType')
+            }}<select v-model="draft.content_type">
               <option value="article">{{ t('editor.types.article') }}</option>
               <option value="review">{{ t('editor.types.review') }}</option>
               <option value="news">{{ t('editor.types.news') }}</option>
@@ -212,7 +215,8 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
           >
           <template v-if="draft.content_type === 'review'">
             <label
-              >{{ t('editor.game') }}<select v-model="draft.game_id">
+              >{{ t('editor.game')
+              }}<select v-model="draft.game_id">
                 <option :value="null">{{ t('editor.noGame') }}</option>
                 <option v-for="game in games" :key="game.id" :value="game.id">
                   {{ game.title }}
@@ -220,7 +224,8 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
               </select></label
             >
             <label
-              >{{ t('editor.authorScore') }}<input
+              >{{ t('editor.authorScore')
+              }}<input
                 v-model.number="draft.review_score"
                 type="number"
                 min="0"
@@ -241,14 +246,16 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
           </fieldset>
         </div>
         <label class="editor-title-field"
-          >{{ t('editor.headline') }}<input
+          >{{ t('editor.headline')
+          }}<input
             v-model.trim="draft.title"
             required
             minlength="5"
             :placeholder="t('editor.headlinePlaceholder')"
         /></label>
         <label
-          >{{ t('editor.summary') }}<textarea
+          >{{ t('editor.summary')
+          }}<textarea
             v-model.trim="draft.summary"
             required
             minlength="20"
@@ -256,7 +263,8 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
           />
         </label>
         <label class="editor-body-field"
-          >{{ t('editor.body') }}<textarea
+          >{{ t('editor.body')
+          }}<textarea
             v-model.trim="draft.body"
             required
             minlength="50"

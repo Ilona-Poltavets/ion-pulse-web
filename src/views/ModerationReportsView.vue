@@ -151,7 +151,14 @@ async function suspendTarget(report: ContentReport): Promise<void> {
               {{ report.target_type }} · {{ new Date(report.created_at).toLocaleString(locale) }}
             </p>
             <h2>
-              {{ t('moderation.reportOn', { target: report.target_type === 'publication' ? t('moderation.publication') : t('moderation.comment') }) }}
+              {{
+                t('moderation.reportOn', {
+                  target:
+                    report.target_type === 'publication'
+                      ? t('moderation.publication')
+                      : t('moderation.comment'),
+                })
+              }}
             </h2>
             <p>{{ report.reason }}</p>
           </div>
@@ -160,7 +167,8 @@ async function suspendTarget(report: ContentReport): Promise<void> {
         <div v-if="expandedId === report.id" class="queue-detail">
           <p v-if="report.target_excerpt" class="report-excerpt">{{ report.target_excerpt }}</p>
           <label
-            >{{ t('moderation.decisionNote') }}<textarea
+            >{{ t('moderation.decisionNote')
+            }}<textarea
               v-model="notes[report.id]"
               :placeholder="t('moderation.decisionNotePlaceholder')"
               required
@@ -192,7 +200,8 @@ async function suspendTarget(report: ContentReport): Promise<void> {
           </div>
           <div v-if="report.target_author_id" class="schedule-controls">
             <label
-              >{{ t('moderation.suspendUntil') }}<input v-model="suspensionEnds[report.id]" type="datetime-local"
+              >{{ t('moderation.suspendUntil')
+              }}<input v-model="suspensionEnds[report.id]" type="datetime-local"
             /></label>
             <button
               class="button button-secondary"
@@ -217,7 +226,10 @@ async function suspendTarget(report: ContentReport): Promise<void> {
       <article v-for="appeal in appeals" :key="appeal.id" class="queue-card expanded">
         <div class="queue-detail">
           <p>{{ appeal.reason }}</p>
-          <label>{{ t('moderation.appealDecisionReason') }}<textarea v-model="appealNotes[appeal.id]" required /></label>
+          <label
+            >{{ t('moderation.appealDecisionReason')
+            }}<textarea v-model="appealNotes[appeal.id]" required />
+          </label>
           <div class="editor-actions">
             <button class="button button-primary" @click="decideAppeal(appeal, 'approved')">
               {{ t('moderation.approveAppeal') }}</button
@@ -240,7 +252,9 @@ async function suspendTarget(report: ContentReport): Promise<void> {
       <article v-for="comment in hiddenComments" :key="comment.id" class="queue-card expanded">
         <div class="queue-detail">
           <p class="report-excerpt">{{ comment.body }}</p>
-          <small>{{ t('moderation.hiddenCommentFor', { publication: comment.publication_id }) }}</small>
+          <small>{{
+            t('moderation.hiddenCommentFor', { publication: comment.publication_id })
+          }}</small>
           <div class="editor-actions">
             <button class="button button-secondary" @click="restoreComment(comment)">
               {{ t('moderation.restoreComment') }}

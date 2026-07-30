@@ -91,7 +91,8 @@ async function decide(
             >{{ t('adminApplications.openPortfolio') }}</a
           >
           <label
-            >{{ t('adminApplications.reviewNote') }}<textarea
+            >{{ t('adminApplications.reviewNote')
+            }}<textarea
               v-model="notes[application.id]"
               :placeholder="t('adminApplications.reviewNotePlaceholder')"
             />

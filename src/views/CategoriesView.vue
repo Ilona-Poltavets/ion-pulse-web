@@ -59,12 +59,23 @@ async function save(category: ManagedCategory): Promise<void> {
         <p class="eyebrow">{{ category.slug }}</p>
         <label>{{ t('categoryManagement.nameRu') }}<input v-model="category.name_ru" /></label>
         <label>{{ t('categoryManagement.nameEn') }}<input v-model="category.name_en" /></label>
-        <label>{{ t('categoryManagement.descriptionRu') }}<textarea v-model="category.description_ru" /></label>
-        <label>{{ t('categoryManagement.descriptionEn') }}<textarea v-model="category.description_en" /></label>
-        <label>{{ t('categoryManagement.color') }}<input v-model="category.color" pattern="#[0-9A-Fa-f]{6}" /></label>
-        <label>{{ t('categoryManagement.sortOrder') }}<input v-model.number="category.sort_order" type="number" min="0" /></label>
+        <label
+          >{{ t('categoryManagement.descriptionRu') }}<textarea v-model="category.description_ru" />
+        </label>
+        <label
+          >{{ t('categoryManagement.descriptionEn') }}<textarea v-model="category.description_en" />
+        </label>
+        <label
+          >{{ t('categoryManagement.color')
+          }}<input v-model="category.color" pattern="#[0-9A-Fa-f]{6}"
+        /></label>
+        <label
+          >{{ t('categoryManagement.sortOrder')
+          }}<input v-model.number="category.sort_order" type="number" min="0"
+        /></label>
         <label class="checkbox-label">
-          <input v-model="category.is_visible" type="checkbox" /> {{ t('categoryManagement.visible') }}
+          <input v-model="category.is_visible" type="checkbox" />
+          {{ t('categoryManagement.visible') }}
         </label>
         <button class="button button-primary">{{ t('categoryManagement.save') }}</button>
       </form>

@@ -61,7 +61,10 @@ async function toggleRole(user: AdminUser, role: string): Promise<void> {
       <article v-for="user in users" :key="user.id" class="queue-card">
         <div class="queue-detail">
           <strong>{{ user.display_name }}</strong
-          ><small>{{ user.email }} · {{ user.is_active ? t('adminUsers.active') : t('adminUsers.inactive') }}</small>
+          ><small
+            >{{ user.email }} ·
+            {{ user.is_active ? t('adminUsers.active') : t('adminUsers.inactive') }}</small
+          >
           <div class="role-list">
             <label v-for="role in roles" :key="role"
               ><input
@@ -90,7 +93,8 @@ async function toggleRole(user: AdminUser, role: string): Promise<void> {
       >
         <div class="queue-detail">
           <strong
-            >{{ entry.action === 'granted' ? t('adminUsers.granted') : t('adminUsers.revoked') }}: {{ roleLabel(entry.role_code) }}</strong
+            >{{ entry.action === 'granted' ? t('adminUsers.granted') : t('adminUsers.revoked') }}:
+            {{ roleLabel(entry.role_code) }}</strong
           ><small>{{ new Date(entry.created_at).toLocaleString(locale) }}</small>
         </div>
       </article>

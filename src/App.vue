@@ -62,15 +62,44 @@ void auth.restore()
           <summary>{{ t('navigation.workspace') }}</summary>
           <div class="workspace-menu-panel">
             <RouterLink
-              v-if="auth.user?.roles.includes('content_manager') || auth.user?.roles.includes('administrator')"
+              v-if="
+                auth.user?.roles.includes('content_manager') ||
+                auth.user?.roles.includes('administrator')
+              "
               to="/content/categories"
               >{{ t('navigation.categories') }}</RouterLink
             >
-            <RouterLink v-if="auth.user?.roles.includes('administrator')" to="/admin/author-applications">{{ t('navigation.admin') }}</RouterLink>
-            <RouterLink v-if="auth.user?.roles.includes('administrator')" to="/admin/users">{{ t('navigation.roles') }}</RouterLink>
-            <RouterLink v-if="auth.user?.roles.includes('editor') || auth.user?.roles.includes('administrator')" to="/editorial-queue">{{ t('navigation.editorial') }}</RouterLink>
-            <RouterLink v-if="auth.user?.roles.some((role) => ['editor', 'moderator', 'administrator'].includes(role))" to="/journal/candidates">{{ t('navigation.journal') }}</RouterLink>
-            <RouterLink v-if="auth.user?.roles.includes('moderator') || auth.user?.roles.includes('administrator')" to="/moderation/reports">{{ t('navigation.moderation') }}</RouterLink>
+            <RouterLink
+              v-if="auth.user?.roles.includes('administrator')"
+              to="/admin/author-applications"
+              >{{ t('navigation.admin') }}</RouterLink
+            >
+            <RouterLink v-if="auth.user?.roles.includes('administrator')" to="/admin/users">{{
+              t('navigation.roles')
+            }}</RouterLink>
+            <RouterLink
+              v-if="
+                auth.user?.roles.includes('editor') || auth.user?.roles.includes('administrator')
+              "
+              to="/editorial-queue"
+              >{{ t('navigation.editorial') }}</RouterLink
+            >
+            <RouterLink
+              v-if="
+                auth.user?.roles.some((role) =>
+                  ['editor', 'moderator', 'administrator'].includes(role),
+                )
+              "
+              to="/journal/candidates"
+              >{{ t('navigation.journal') }}</RouterLink
+            >
+            <RouterLink
+              v-if="
+                auth.user?.roles.includes('moderator') || auth.user?.roles.includes('administrator')
+              "
+              to="/moderation/reports"
+              >{{ t('navigation.moderation') }}</RouterLink
+            >
           </div>
         </details>
         <button
@@ -83,7 +112,11 @@ void auth.restore()
         </button>
         <label class="locale-switcher">
           <span class="sr-only">{{ t('navigation.language') }}</span>
-          <select :value="locale" :aria-label="t('navigation.language')" @change="setLocale(($event.target as HTMLSelectElement).value as SupportedLocale)">
+          <select
+            :value="locale"
+            :aria-label="t('navigation.language')"
+            @change="setLocale(($event.target as HTMLSelectElement).value as SupportedLocale)"
+          >
             <option value="ru">Русский</option>
             <option value="en">English</option>
           </select>

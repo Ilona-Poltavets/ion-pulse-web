@@ -185,7 +185,9 @@ async function submitApplication(): Promise<void> {
         <form class="dashboard-card" @submit.prevent="save">
           <p class="eyebrow">{{ t('profile.settingsEyebrow') }}</p>
           <h2>{{ t('profile.title') }}</h2>
-          <label>{{ t('profile.displayName') }}<input v-model.trim="displayName" required minlength="2" /></label>
+          <label
+            >{{ t('profile.displayName') }}<input v-model.trim="displayName" required minlength="2"
+          /></label>
           <button class="button button-secondary">{{ t('profile.save') }}</button>
           <button class="button button-secondary" type="button" @click="exportData">
             {{ t('profile.exportData') }}
@@ -194,9 +196,12 @@ async function submitApplication(): Promise<void> {
         <section class="dashboard-card account-deletion">
           <p class="eyebrow">{{ t('profile.deleteEyebrow') }}</p>
           <h2>{{ t('profile.deleteTitle') }}</h2>
-          <label>{{ t('profile.password') }}<input v-model="deletionPassword" type="password" /></label>
           <label
-            >{{ t('profile.reasonOptional') }}<textarea v-model.trim="deletionReason" maxlength="1000" />
+            >{{ t('profile.password') }}<input v-model="deletionPassword" type="password"
+          /></label>
+          <label
+            >{{ t('profile.reasonOptional')
+            }}<textarea v-model.trim="deletionReason" maxlength="1000" />
           </label>
           <button
             class="button button-secondary"
@@ -214,19 +219,19 @@ async function submitApplication(): Promise<void> {
           <p class="eyebrow">{{ t('profile.applicationEyebrow') }}</p>
           <h2>{{ t('profile.becomeAuthor') }}</h2>
           <label
-            >{{ t('profile.motivation') }}<textarea
-              v-model="motivation"
-              required
-              minlength="50"
-            />
+            >{{ t('profile.motivation') }}<textarea v-model="motivation" required minlength="50" />
           </label>
-          <label>{{ t('profile.portfolioOptional') }}<input v-model.trim="portfolioUrl" type="url" /></label>
+          <label
+            >{{ t('profile.portfolioOptional') }}<input v-model.trim="portfolioUrl" type="url"
+          /></label>
           <button class="button button-secondary">{{ t('profile.sendApplication') }}</button>
         </form>
         <section v-else-if="application" class="dashboard-card">
           <p class="eyebrow">{{ t('profile.applicationEyebrow') }}</p>
           <h2>{{ t('profile.applicationSent') }}</h2>
-          <p class="muted-copy">{{ t('profile.status', { status: applicationStatus(application.status) }) }}</p>
+          <p class="muted-copy">
+            {{ t('profile.status', { status: applicationStatus(application.status) }) }}
+          </p>
         </section>
       </aside>
 
@@ -248,7 +253,9 @@ async function submitApplication(): Promise<void> {
                   ><span>{{ publicationStatus(draft.status) }}</span>
                 </div>
                 <strong>{{ draft.title }}</strong>
-                <small>{{ t('profile.aiReview', { status: aiStatus(aiReviews[draft.id]?.status) }) }}</small>
+                <small>{{
+                  t('profile.aiReview', { status: aiStatus(aiReviews[draft.id]?.status) })
+                }}</small>
               </div>
               <div class="publication-list-actions">
                 <RouterLink
@@ -300,7 +307,11 @@ async function submitApplication(): Promise<void> {
             <li v-for="author in authorSubscriptions" :key="author.author_id">
               <div>
                 <strong>{{ author.display_name }}</strong>
-                <small>{{ t('profile.subscribedSince', { date: new Date(author.subscribed_at).toLocaleDateString(locale) }) }}</small>
+                <small>{{
+                  t('profile.subscribedSince', {
+                    date: new Date(author.subscribed_at).toLocaleDateString(locale),
+                  })
+                }}</small>
               </div>
               <button
                 class="button button-secondary"

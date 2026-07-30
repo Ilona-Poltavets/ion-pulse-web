@@ -38,14 +38,18 @@ async function submit(): Promise<void> {
       <p>{{ t('auth.appealIntro') }}</p>
       <label>Email<input v-model.trim="email" required type="email" autocomplete="email" /></label>
       <label
-        >{{ t('auth.password') }}<input v-model="password" required type="password" autocomplete="current-password"
+        >{{ t('auth.password')
+        }}<input v-model="password" required type="password" autocomplete="current-password"
       /></label>
       <label
-        >{{ t('auth.reason') }}<textarea v-model.trim="reason" required minlength="10" maxlength="2000" />
+        >{{ t('auth.reason')
+        }}<textarea v-model.trim="reason" required minlength="10" maxlength="2000" />
       </label>
       <p v-if="error" class="form-error">{{ error }}</p>
       <p v-if="message" class="dashboard-message">{{ message }}</p>
-      <button class="button button-primary" :disabled="isSaving">{{ t('auth.submitAppeal') }}</button>
+      <button class="button button-primary" :disabled="isSaving">
+        {{ t('auth.submitAppeal') }}
+      </button>
       <RouterLink class="auth-link" to="/login">{{ t('auth.backToLogin') }}</RouterLink>
     </form>
   </section>

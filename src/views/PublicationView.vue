@@ -235,14 +235,18 @@ watch(
           type="button"
           @click="toggleAuthorSubscription"
         >
-          {{ isSubscribedToAuthor ? t('publications.unsubscribeAuthor') : t('publications.subscribeAuthor') }}
+          {{
+            isSubscribedToAuthor
+              ? t('publications.unsubscribeAuthor')
+              : t('publications.subscribeAuthor')
+          }}
         </button>
       </div>
       <p v-if="reviewGame || publication.review_score !== null" class="publication-review-meta">
         <span v-if="reviewGame">{{ t('publications.game', { title: reviewGame.title }) }}</span>
-        <span v-if="publication.review_score !== null"
-          >{{ t('publications.authorScore', { score: publication.review_score }) }}</span
-        >
+        <span v-if="publication.review_score !== null">{{
+          t('publications.authorScore', { score: publication.review_score })
+        }}</span>
       </p>
       <h1>{{ publication.title }}</h1>
       <p class="publication-summary">{{ publication.summary }}</p>
@@ -250,7 +254,11 @@ watch(
         {{ t('publications.translationFallback', { locale: publication.locale.toUpperCase() }) }}
       </p>
       <div class="publication-body">{{ publication.body }}</div>
-      <section v-if="digestItems.length" class="digest-items" :aria-label="t('publications.weeklyStories')">
+      <section
+        v-if="digestItems.length"
+        class="digest-items"
+        :aria-label="t('publications.weeklyStories')"
+      >
         <h2>{{ t('publications.weeklyStories') }}</h2>
         <RouterLink v-for="item in digestItems" :key="item.id" :to="`/publications/${item.id}`">
           <small>{{ item.category_slug }}</small

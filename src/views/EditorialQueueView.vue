@@ -95,7 +95,8 @@ async function decide(
         <div v-if="expandedId === publication.id" class="queue-detail">
           <div class="publication-body">{{ publication.body }}</div>
           <label
-            >{{ t('editorialQueue.note') }}<textarea
+            >{{ t('editorialQueue.note')
+            }}<textarea
               v-model="notes[publication.id]"
               :placeholder="t('editorialQueue.notePlaceholder')"
               required
@@ -126,9 +127,8 @@ async function decide(
           </div>
           <div class="schedule-controls">
             <label
-              >{{ t('editorialQueue.scheduleLabel') }}<input
-                v-model="scheduledAt[publication.id]"
-                type="datetime-local"
+              >{{ t('editorialQueue.scheduleLabel')
+              }}<input v-model="scheduledAt[publication.id]" type="datetime-local"
             /></label>
             <button
               class="button button-secondary"

@@ -134,7 +134,18 @@ a {
   border: 1px solid var(--line);
   border-radius: 999px;
 }
-.locale-switcher select { min-height: 36px; padding: 0 2rem 0 0.8rem; color: var(--text); appearance: auto; background: transparent; border: 0; cursor: pointer; font: inherit; font-size: .76rem; font-weight: 700; }
+.locale-switcher select {
+  min-height: 36px;
+  padding: 0 2rem 0 0.8rem;
+  color: var(--text);
+  appearance: auto;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
 .header-actions {
   display: flex;
   gap: 0.7rem;
@@ -149,15 +160,63 @@ a {
   font: inherit;
   font-size: 0.8rem;
 }
-.workspace-menu { position: relative; }
-.workspace-menu summary { padding: .55rem .7rem; color: var(--text); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; font-size: .76rem; font-weight: 700; list-style: none; }
-.workspace-menu summary::-webkit-details-marker { display: none; }
-.workspace-menu summary::after { margin-left: .5rem; color: var(--muted); content: '⌄'; }
-.workspace-menu[open] summary { background: var(--surface-raised); }
-.workspace-menu-panel { position: absolute; top: calc(100% + .6rem); right: 0; display: grid; min-width: 190px; padding: .45rem; background: #1a1c29; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 20px 48px rgb(0 0 0 / 35%); }
-.workspace-menu-panel a { padding: .65rem .75rem; border-radius: 6px; color: var(--muted); font-size: .8rem; }
-.workspace-menu-panel a:hover, .workspace-menu-panel a.router-link-active { color: var(--text); background: rgb(255 255 255 / 7%); }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.workspace-menu {
+  position: relative;
+}
+.workspace-menu summary {
+  padding: 0.55rem 0.7rem;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 700;
+  list-style: none;
+}
+.workspace-menu summary::-webkit-details-marker {
+  display: none;
+}
+.workspace-menu summary::after {
+  margin-left: 0.5rem;
+  color: var(--muted);
+  content: '⌄';
+}
+.workspace-menu[open] summary {
+  background: var(--surface-raised);
+}
+.workspace-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  display: grid;
+  min-width: 190px;
+  padding: 0.45rem;
+  background: #1a1c29;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 20px 48px rgb(0 0 0 / 35%);
+}
+.workspace-menu-panel a {
+  padding: 0.65rem 0.75rem;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.workspace-menu-panel a:hover,
+.workspace-menu-panel a.router-link-active {
+  color: var(--text);
+  background: rgb(255 255 255 / 7%);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .auth-page {
   display: grid;
   min-height: calc(100vh - 170px);
@@ -1561,9 +1620,18 @@ h1 em {
     display: none;
   }
 
-  .site-header { grid-template-columns: 1fr auto; }
-  .header-actions { gap: .45rem; }
-  .account-link { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .site-header {
+    grid-template-columns: 1fr auto;
+  }
+  .header-actions {
+    gap: 0.45rem;
+  }
+  .account-link {
+    max-width: 9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
   .hero-section {
     grid-template-columns: 1fr;
@@ -1621,13 +1689,34 @@ h1 em {
     min-height: 76px;
   }
 
-  .brand-mark { height: 18px; }
-  .brand-mark span:nth-child(2) { height: 18px; }
-  .header-actions .account-link { display: none; }
-  .workspace-menu summary { font-size: 0; padding: .65rem; }
-  .workspace-menu summary::after { margin: 0; font-size: .9rem; content: '☰'; }
-  .workspace-menu-panel { right: -3.4rem; min-width: 210px; }
-  .locale-switcher select { width: 42px; padding: 0 .2rem; color: transparent; text-indent: -999px; }
+  .brand-mark {
+    height: 18px;
+  }
+  .brand-mark span:nth-child(2) {
+    height: 18px;
+  }
+  .header-actions .account-link {
+    display: none;
+  }
+  .workspace-menu summary {
+    font-size: 0;
+    padding: 0.65rem;
+  }
+  .workspace-menu summary::after {
+    margin: 0;
+    font-size: 0.9rem;
+    content: '☰';
+  }
+  .workspace-menu-panel {
+    right: -3.4rem;
+    min-width: 210px;
+  }
+  .locale-switcher select {
+    width: 42px;
+    padding: 0 0.2rem;
+    color: transparent;
+    text-indent: -999px;
+  }
 
   .brand {
     font-size: 0.78rem;

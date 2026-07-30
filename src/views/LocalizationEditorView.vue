@@ -63,21 +63,32 @@ async function save(): Promise<void> {
         <p class="eyebrow">{{ t('localizationEditor.eyebrow') }}</p>
         <h1>{{ t('localizationEditor.title') }}</h1>
       </div>
-      <RouterLink class="button button-secondary" :to="`/publications/${publicationId}`"
-        >{{ t('localizationEditor.backToPublication') }}</RouterLink
-      >
+      <RouterLink class="button button-secondary" :to="`/publications/${publicationId}`">{{
+        t('localizationEditor.backToPublication')
+      }}</RouterLink>
     </header>
     <p v-if="error" class="form-error">{{ error }}</p>
     <form v-else-if="localization" class="editor-form localization-form" @submit.prevent="save">
       <p class="muted-copy">
-        {{ t('localizationEditor.metadata', { locale: localization.locale.toUpperCase(), origin: localization.origin, revision: localization.source_revision }) }}
+        {{
+          t('localizationEditor.metadata', {
+            locale: localization.locale.toUpperCase(),
+            origin: localization.origin,
+            revision: localization.source_revision,
+          })
+        }}
       </p>
       <label class="editor-title-field"
-        >{{ t('localizationEditor.headline') }}<input v-model.trim="localization.title" required minlength="5"
+        >{{ t('localizationEditor.headline')
+        }}<input v-model.trim="localization.title" required minlength="5"
       /></label>
-      <label>{{ t('localizationEditor.summary') }}<textarea v-model.trim="localization.summary" required minlength="20" /></label>
+      <label
+        >{{ t('localizationEditor.summary')
+        }}<textarea v-model.trim="localization.summary" required minlength="20" />
+      </label>
       <label class="editor-body-field"
-        >{{ t('localizationEditor.body') }}<textarea v-model.trim="localization.body" required minlength="50" />
+        >{{ t('localizationEditor.body')
+        }}<textarea v-model.trim="localization.body" required minlength="50" />
       </label>
       <div class="editor-footer">
         <span>{{ message }}</span
