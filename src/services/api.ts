@@ -200,7 +200,9 @@ export interface PublicationLocalization {
   body: string
 }
 
-const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+const apiUrl =
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.DEV ? 'http://localhost:8000' : window.location.origin)
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}/api/v1${path}`, {
