@@ -116,7 +116,18 @@ export const messages = {
       issueNavigation: 'Переход между выпусками', previous: '← Предыдущий выпуск', next: 'Следующий выпуск →',
       loadError: 'Не удалось загрузить журнал', openError: 'Не удалось открыть выпуск',
     },
-    profile: { newStory: 'Новый материал' },
+    profile: {
+      newStory: 'Новый материал', settingsEyebrow: 'Настройки', title: 'Профиль', displayName: 'Имя пользователя', save: 'Сохранить', exportData: 'Экспортировать данные',
+      deleteEyebrow: 'Удаление аккаунта', deleteTitle: 'Удалить аккаунт', password: 'Пароль', reasonOptional: 'Причина (необязательно)', deleteAccount: 'Удалить аккаунт', deleteConfirmation: 'Удалить аккаунт? Профиль будет обезличен, а вход отключён.',
+      applicationEyebrow: 'Заявка автора', becomeAuthor: 'Стать автором', motivation: 'Почему вы хотите писать для Ion Pulse?', portfolioOptional: 'Портфолио (необязательно)', sendApplication: 'Отправить заявку', applicationSent: 'Заявка отправлена', status: 'Статус: {status}',
+      publicationsEyebrow: 'Мои материалы', myPublications: 'Мои материалы', create: 'Создать →', noDrafts: 'Материалов пока нет. Начните с черновика.', aiReview: 'ИИ-проверка: {status}', edit: 'Редактировать', submit: 'Отправить',
+      gamesEyebrow: 'Подписки на игры', games: 'Игры', authorsEyebrow: 'Подписки на авторов', authors: 'Авторы', subscribe: 'Подписаться', unsubscribe: 'Отписаться', subscribedSince: 'Подписка с {date}',
+      saved: 'Профиль сохранён', exportReady: 'Экспорт подготовлен', submitted: 'Материал отправлен редактору', loadError: 'Не удалось загрузить профиль', actionError: 'Не удалось выполнить действие', exportError: 'Не удалось экспортировать данные', deleteError: 'Не удалось удалить аккаунт', subscriptionError: 'Не удалось обновить подписку', submitError: 'Не удалось отправить материал', applicationError: 'Не удалось отправить заявку', aiNotStarted: 'не запущена',
+      roles: { member: 'Участник', author: 'Автор', editor: 'Редактор', admin: 'Администратор', moderator: 'Модератор' },
+      publicationStatuses: { draft: 'Черновик', changes_requested: 'Нужна доработка', editorial_review: 'На проверке редактора', scheduled: 'Запланирован', published: 'Опубликован', archived: 'В архиве', rejected: 'Отклонён' },
+      aiStatuses: { pending: 'ожидает', reviewing: 'проверяется', completed: 'готово', failed: 'недоступно' },
+      applicationStatuses: { pending: 'ожидает', approved: 'одобрена', rejected: 'отклонена' },
+    },
   },
   en: {
     navigation: {
@@ -236,6 +247,17 @@ export const messages = {
       issueNavigation: 'Issue navigation', previous: '← Previous issue', next: 'Next issue →',
       loadError: 'Could not load journal', openError: 'Could not open issue',
     },
-    profile: { newStory: 'New story' },
+    profile: {
+      newStory: 'New story', settingsEyebrow: 'Settings', title: 'Profile', displayName: 'Display name', save: 'Save', exportData: 'Export data',
+      deleteEyebrow: 'Delete account', deleteTitle: 'Delete account', password: 'Password', reasonOptional: 'Reason (optional)', deleteAccount: 'Delete account', deleteConfirmation: 'Delete your account? Your profile will be anonymized and sign-in will be disabled.',
+      applicationEyebrow: 'Author application', becomeAuthor: 'Become an author', motivation: 'Why do you want to write for Ion Pulse?', portfolioOptional: 'Portfolio (optional)', sendApplication: 'Send application', applicationSent: 'Application sent', status: 'Status: {status}',
+      publicationsEyebrow: 'My publications', myPublications: 'My publications', create: 'Create →', noDrafts: 'There are no materials yet. Start with a draft.', aiReview: 'AI review: {status}', edit: 'Edit', submit: 'Submit',
+      gamesEyebrow: 'Game subscriptions', games: 'Games', authorsEyebrow: 'Author subscriptions', authors: 'Authors', subscribe: 'Subscribe', unsubscribe: 'Unsubscribe', subscribedSince: 'Subscribed since {date}',
+      saved: 'Profile saved', exportReady: 'Your export is ready', submitted: 'Material sent to the editorial team', loadError: 'Could not load profile', actionError: 'Could not complete the action', exportError: 'Could not export data', deleteError: 'Could not delete account', subscriptionError: 'Could not update subscription', submitError: 'Could not submit material', applicationError: 'Could not send application', aiNotStarted: 'not started',
+      roles: { member: 'Member', author: 'Author', editor: 'Editor', admin: 'Administrator', moderator: 'Moderator' },
+      publicationStatuses: { draft: 'Draft', changes_requested: 'Changes requested', editorial_review: 'In editorial review', scheduled: 'Scheduled', published: 'Published', archived: 'Archived', rejected: 'Rejected' },
+      aiStatuses: { pending: 'pending', reviewing: 'in review', completed: 'ready', failed: 'unavailable' },
+      applicationStatuses: { pending: 'pending', approved: 'approved', rejected: 'rejected' },
+    },
   },
 } as const

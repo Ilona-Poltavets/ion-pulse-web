@@ -25,7 +25,7 @@ import {
   type PublicationAiReview,
 } from '@/services/api'
 const auth = useAuthStore()
-const { t } = useI18n()
+const { locale, t } = useI18n()
 const router = useRouter()
 const displayName = ref('')
 const message = ref('')
@@ -40,29 +40,20 @@ const aiReviews = ref<Record<string, PublicationAiReview | null>>({})
 const deletionPassword = ref('')
 const deletionReason = ref('')
 
-const publicationStatusLabels: Record<string, string> = {
-  draft: 'Черновик',
-  changes_requested: 'Нужна доработка',
-  editorial_review: 'На проверке редактора',
-  scheduled: 'Запланирован',
-  published: 'Опубликован',
-  archived: 'В архиве',
-  rejected: 'Отклонён',
-}
-
-const aiStatusLabels: Record<string, string> = {
-  pending: 'ожидает',
-  reviewing: 'проверяется',
-  completed: 'готово',
-  failed: 'недоступно',
-}
-
 function publicationStatus(status: string): string {
-  return publicationStatusLabels[status] ?? status
+  return t(`profile.publicationStatuses.${status}`, status)
 }
 
 function aiStatus(status: string | undefined): string {
-  return status ? (aiStatusLabels[status] ?? status) : 'не запущена'
+  return status ? t(`profile.aiStatuses.${status}`, status) : t('profile.aiNotStarted')
+}
+
+function roleLabel(role: string): string {
+  return t(`profile.roles.${role}`, role)
+}
+
+function applicationStatus(status: string): string {
+  return t(`profile.applicationStatuses.${status}`, status)
 }
 
 function canSubmit(draft: Draft): boolean {
@@ -96,27 +87,27 @@ onMounted(async () => {
     )
     aiReviews.value = Object.fromEntries(reviewEntries)
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось загрузить профиль'
+    message.value = error instanceof Error ? error.message : t('profile.loadError')
   }
 })
 async function save(): Promise<void> {
   try {
     await auth.update({ display_name: displayName.value })
-    message.value = 'Профиль сохранён'
+    message.value = t('profile.saved')
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Ошибка'
+    message.value = error instanceof Error ? error.message : t('profile.actionError')
   }
 }
 async function exportData(): Promise<void> {
   try {
     await exportMyData()
-    message.value = 'Экспорт подготовлен'
+    message.value = t('profile.exportReady')
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось экспортировать данные'
+    message.value = error instanceof Error ? error.message : t('profile.exportError')
   }
 }
 async function deleteAccount(): Promise<void> {
-  if (!confirm('Удалить аккаунт? Профиль будет обезличен, а вход отключён.')) return
+  if (!confirm(t('profile.deleteConfirmation'))) return
   try {
     await deleteMyAccount({
       password: deletionPassword.value,
@@ -125,7 +116,7 @@ async function deleteAccount(): Promise<void> {
     await auth.signOut()
     await router.replace('/')
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось удалить аккаунт'
+    message.value = error instanceof Error ? error.message : t('profile.deleteError')
   }
 }
 async function toggleGameSubscription(game: Game): Promise<void> {
@@ -139,7 +130,7 @@ async function toggleGameSubscription(game: Game): Promise<void> {
       gameSubscriptions.value.push({ ...game, subscribed_at: new Date().toISOString() })
     }
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось обновить подписку'
+    message.value = error instanceof Error ? error.message : t('profile.subscriptionError')
   }
 }
 async function unsubscribeAuthor(authorId: string): Promise<void> {
@@ -149,16 +140,16 @@ async function unsubscribeAuthor(authorId: string): Promise<void> {
       (item) => item.author_id !== authorId,
     )
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось обновить подписку'
+    message.value = error instanceof Error ? error.message : t('profile.subscriptionError')
   }
 }
 async function submitDraftForReview(id: string): Promise<void> {
   try {
     const updated = await submitDraft(id)
     drafts.value = drafts.value.map((draft) => (draft.id === id ? updated : draft))
-    message.value = 'Материал отправлен редактору'
+    message.value = t('profile.submitted')
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось отправить материал'
+    message.value = error instanceof Error ? error.message : t('profile.submitError')
   }
 }
 async function submitApplication(): Promise<void> {
@@ -168,7 +159,7 @@ async function submitApplication(): Promise<void> {
       portfolio_url: portfolioUrl.value || undefined,
     })
   } catch (error) {
-    message.value = error instanceof Error ? error.message : 'Не удалось отправить заявку'
+    message.value = error instanceof Error ? error.message : t('profile.applicationError')
   }
 }
 </script>
@@ -181,7 +172,7 @@ async function submitApplication(): Promise<void> {
         <p>{{ auth.user.email }}</p>
         <div class="role-list">
           <span v-for="role in auth.user.roles.length ? auth.user.roles : ['member']" :key="role">
-            {{ role === 'member' ? 'Участник' : role }}
+            {{ roleLabel(role) }}
           </span>
         </div>
       </div>
@@ -192,27 +183,27 @@ async function submitApplication(): Promise<void> {
     <div class="dashboard-grid">
       <aside class="dashboard-sidebar">
         <form class="dashboard-card" @submit.prevent="save">
-          <p class="eyebrow">SETTINGS</p>
-          <h2>Профиль</h2>
-          <label>Имя пользователя<input v-model.trim="displayName" required minlength="2" /></label>
-          <button class="button button-secondary">Сохранить</button>
+          <p class="eyebrow">{{ t('profile.settingsEyebrow') }}</p>
+          <h2>{{ t('profile.title') }}</h2>
+          <label>{{ t('profile.displayName') }}<input v-model.trim="displayName" required minlength="2" /></label>
+          <button class="button button-secondary">{{ t('profile.save') }}</button>
           <button class="button button-secondary" type="button" @click="exportData">
-            Экспортировать данные
+            {{ t('profile.exportData') }}
           </button>
         </form>
         <section class="dashboard-card account-deletion">
-          <p class="eyebrow">DELETE ACCOUNT</p>
-          <h2>Удалить аккаунт</h2>
-          <label>Пароль<input v-model="deletionPassword" type="password" /></label>
+          <p class="eyebrow">{{ t('profile.deleteEyebrow') }}</p>
+          <h2>{{ t('profile.deleteTitle') }}</h2>
+          <label>{{ t('profile.password') }}<input v-model="deletionPassword" type="password" /></label>
           <label
-            >Причина (необязательно)<textarea v-model.trim="deletionReason" maxlength="1000" />
+            >{{ t('profile.reasonOptional') }}<textarea v-model.trim="deletionReason" maxlength="1000" />
           </label>
           <button
             class="button button-secondary"
             :disabled="!deletionPassword"
             @click="deleteAccount"
           >
-            Удалить аккаунт
+            {{ t('profile.deleteAccount') }}
           </button>
         </section>
         <form
@@ -220,22 +211,22 @@ async function submitApplication(): Promise<void> {
           class="dashboard-card"
           @submit.prevent="submitApplication"
         >
-          <p class="eyebrow">AUTHOR APPLICATION</p>
-          <h2>Стать автором</h2>
+          <p class="eyebrow">{{ t('profile.applicationEyebrow') }}</p>
+          <h2>{{ t('profile.becomeAuthor') }}</h2>
           <label
-            >Почему вы хотите писать для Ion Pulse?<textarea
+            >{{ t('profile.motivation') }}<textarea
               v-model="motivation"
               required
               minlength="50"
             />
           </label>
-          <label>Портфолио (необязательно)<input v-model.trim="portfolioUrl" type="url" /></label>
-          <button class="button button-secondary">Отправить заявку</button>
+          <label>{{ t('profile.portfolioOptional') }}<input v-model.trim="portfolioUrl" type="url" /></label>
+          <button class="button button-secondary">{{ t('profile.sendApplication') }}</button>
         </form>
         <section v-else-if="application" class="dashboard-card">
-          <p class="eyebrow">AUTHOR APPLICATION</p>
-          <h2>Заявка отправлена</h2>
-          <p class="muted-copy">Статус: {{ application.status }}</p>
+          <p class="eyebrow">{{ t('profile.applicationEyebrow') }}</p>
+          <h2>{{ t('profile.applicationSent') }}</h2>
+          <p class="muted-copy">{{ t('profile.status', { status: applicationStatus(application.status) }) }}</p>
         </section>
       </aside>
 
@@ -243,12 +234,12 @@ async function submitApplication(): Promise<void> {
         <section class="dashboard-card">
           <div class="dashboard-section-heading">
             <div>
-              <p class="eyebrow">MY PUBLICATIONS</p>
-              <h2>Мои материалы</h2>
+              <p class="eyebrow">{{ t('profile.publicationsEyebrow') }}</p>
+              <h2>{{ t('profile.myPublications') }}</h2>
             </div>
-            <RouterLink class="text-link" to="/write">Создать →</RouterLink>
+            <RouterLink class="text-link" to="/write">{{ t('profile.create') }}</RouterLink>
           </div>
-          <p v-if="!drafts.length" class="empty-state">Материалов пока нет. Начните с черновика.</p>
+          <p v-if="!drafts.length" class="empty-state">{{ t('profile.noDrafts') }}</p>
           <ul v-else class="publication-list">
             <li v-for="draft in drafts" :key="draft.id">
               <div class="publication-list-copy">
@@ -257,14 +248,14 @@ async function submitApplication(): Promise<void> {
                   ><span>{{ publicationStatus(draft.status) }}</span>
                 </div>
                 <strong>{{ draft.title }}</strong>
-                <small>ИИ-проверка: {{ aiStatus(aiReviews[draft.id]?.status) }}</small>
+                <small>{{ t('profile.aiReview', { status: aiStatus(aiReviews[draft.id]?.status) }) }}</small>
               </div>
               <div class="publication-list-actions">
                 <RouterLink
                   v-if="canSubmit(draft)"
                   class="button button-secondary"
                   :to="`/write/${draft.id}`"
-                  >Редактировать</RouterLink
+                  >{{ t('profile.edit') }}</RouterLink
                 >
                 <button
                   v-if="canSubmit(draft)"
@@ -272,7 +263,7 @@ async function submitApplication(): Promise<void> {
                   type="button"
                   @click="submitDraftForReview(draft.id)"
                 >
-                  Отправить
+                  {{ t('profile.submit') }}
                 </button>
               </div>
             </li>
@@ -280,8 +271,8 @@ async function submitApplication(): Promise<void> {
         </section>
 
         <section v-if="games.length" class="dashboard-card">
-          <p class="eyebrow">GAME SUBSCRIPTIONS</p>
-          <h2>Игры</h2>
+          <p class="eyebrow">{{ t('profile.gamesEyebrow') }}</p>
+          <h2>{{ t('profile.games') }}</h2>
           <ul class="game-list">
             <li v-for="game in games" :key="game.id">
               <div>
@@ -295,28 +286,28 @@ async function submitApplication(): Promise<void> {
               >
                 {{
                   gameSubscriptions.some((item) => item.id === game.id)
-                    ? 'Отписаться'
-                    : 'Подписаться'
+                    ? t('profile.unsubscribe')
+                    : t('profile.subscribe')
                 }}
               </button>
             </li>
           </ul>
         </section>
         <section v-if="authorSubscriptions.length" class="dashboard-card">
-          <p class="eyebrow">AUTHOR SUBSCRIPTIONS</p>
-          <h2>Авторы</h2>
+          <p class="eyebrow">{{ t('profile.authorsEyebrow') }}</p>
+          <h2>{{ t('profile.authors') }}</h2>
           <ul class="game-list">
             <li v-for="author in authorSubscriptions" :key="author.author_id">
               <div>
                 <strong>{{ author.display_name }}</strong>
-                <small>Подписка с {{ new Date(author.subscribed_at).toLocaleDateString() }}</small>
+                <small>{{ t('profile.subscribedSince', { date: new Date(author.subscribed_at).toLocaleDateString(locale) }) }}</small>
               </div>
               <button
                 class="button button-secondary"
                 type="button"
                 @click="unsubscribeAuthor(author.author_id)"
               >
-                Отписаться
+                {{ t('profile.unsubscribe') }}
               </button>
             </li>
           </ul>
