@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 import {
   getPublicationLocalization,
   updatePublicationLocalization,
@@ -12,6 +13,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const { t } = useI18n()
 const publicationId = typeof route.params.id === 'string' ? route.params.id : ''
 const locale = route.params.locale === 'en' ? 'en' : route.params.locale === 'ru' ? 'ru' : null
 const localization = ref<PublicationLocalization | null>(null)
@@ -32,7 +34,7 @@ onMounted(async () => {
   try {
     localization.value = await getPublicationLocalization(publicationId, locale)
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить перевод'
+    error.value = caught instanceof Error ? caught.message : t('localizationEditor.loadError')
   }
 })
 
@@ -45,9 +47,9 @@ async function save(): Promise<void> {
       locale,
       localization.value,
     )
-    message.value = 'Перевод сохранён как ручная редактура'
+    message.value = t('localizationEditor.saved')
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Не удалось сохранить перевод'
+    error.value = caught instanceof Error ? caught.message : t('localizationEditor.saveError')
   } finally {
     isSaving.value = false
   }
@@ -58,30 +60,29 @@ async function save(): Promise<void> {
   <section class="editor-page">
     <header class="editor-header">
       <div>
-        <p class="eyebrow">HUMAN LOCALIZATION</p>
-        <h1>Редактура перевода</h1>
+        <p class="eyebrow">{{ t('localizationEditor.eyebrow') }}</p>
+        <h1>{{ t('localizationEditor.title') }}</h1>
       </div>
       <RouterLink class="button button-secondary" :to="`/publications/${publicationId}`"
-        >К материалу</RouterLink
+        >{{ t('localizationEditor.backToPublication') }}</RouterLink
       >
     </header>
     <p v-if="error" class="form-error">{{ error }}</p>
     <form v-else-if="localization" class="editor-form localization-form" @submit.prevent="save">
       <p class="muted-copy">
-        {{ localization.locale.toUpperCase() }} · источник: {{ localization.origin }} · ревизия
-        оригинала {{ localization.source_revision }}
+        {{ t('localizationEditor.metadata', { locale: localization.locale.toUpperCase(), origin: localization.origin, revision: localization.source_revision }) }}
       </p>
       <label class="editor-title-field"
-        >Заголовок<input v-model.trim="localization.title" required minlength="5"
+        >{{ t('localizationEditor.headline') }}<input v-model.trim="localization.title" required minlength="5"
       /></label>
-      <label>Анонс<textarea v-model.trim="localization.summary" required minlength="20" /></label>
+      <label>{{ t('localizationEditor.summary') }}<textarea v-model.trim="localization.summary" required minlength="20" /></label>
       <label class="editor-body-field"
-        >Текст<textarea v-model.trim="localization.body" required minlength="50" />
+        >{{ t('localizationEditor.body') }}<textarea v-model.trim="localization.body" required minlength="50" />
       </label>
       <div class="editor-footer">
         <span>{{ message }}</span
         ><button class="button button-primary" :disabled="isSaving">
-          {{ isSaving ? 'Сохраняем…' : 'Сохранить перевод' }}
+          {{ isSaving ? t('localizationEditor.saving') : t('localizationEditor.save') }}
         </button>
       </div>
     </form>

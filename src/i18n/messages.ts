@@ -144,6 +144,9 @@ export const messages = {
     categoryManagement: {
       eyebrow: 'Управление контентом', title: 'Категории', nameRu: 'Название (RU)', nameEn: 'Название (EN)', descriptionRu: 'Описание (RU)', descriptionEn: 'Описание (EN)', color: 'Цвет', sortOrder: 'Порядок', visible: 'Показывать в публичном каталоге', save: 'Сохранить', saved: 'Категория сохранена', saveError: 'Не удалось сохранить категорию',
     },
+    localizationEditor: {
+      eyebrow: 'Ручная локализация', title: 'Редактура перевода', backToPublication: 'К материалу', metadata: '{locale} · источник: {origin} · ревизия оригинала {revision}', headline: 'Заголовок', summary: 'Анонс', body: 'Текст', saving: 'Сохраняем…', save: 'Сохранить перевод', saved: 'Перевод сохранён как ручная редактура', loadError: 'Не удалось загрузить перевод', saveError: 'Не удалось сохранить перевод',
+    },
   },
   en: {
     navigation: {
@@ -290,6 +293,9 @@ export const messages = {
     },
     categoryManagement: {
       eyebrow: 'Content management', title: 'Categories', nameRu: 'Name (RU)', nameEn: 'Name (EN)', descriptionRu: 'Description (RU)', descriptionEn: 'Description (EN)', color: 'Color', sortOrder: 'Sort order', visible: 'Show in the public catalog', save: 'Save', saved: 'Category saved', saveError: 'Could not save category',
+    },
+    localizationEditor: {
+      eyebrow: 'Human localization', title: 'Edit translation', backToPublication: 'Back to publication', metadata: '{locale} · source: {origin} · original revision {revision}', headline: 'Headline', summary: 'Summary', body: 'Body', saving: 'Saving…', save: 'Save translation', saved: 'Translation saved as a manual edit', loadError: 'Could not load translation', saveError: 'Could not save translation',
     },
   },
 } as const
