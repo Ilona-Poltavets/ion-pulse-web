@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
@@ -13,10 +13,10 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const candidates = ref<JournalCandidate[]>([])
 const error = ref('')
-const title = ref('Выпуск недели')
+const title = ref(t('journalCandidates.issueTitle'))
 const selected = ref<string[]>([])
 const message = ref('')
 
@@ -30,13 +30,23 @@ onMounted(async () => {
     candidates.value = await listJournalCandidates(locale.value as 'ru' | 'en')
     selected.value = candidates.value.map((candidate) => candidate.id)
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить кандидатов'
+    error.value = caught instanceof Error ? caught.message : t('journalCandidates.loadError')
   }
+})
+
+watch(locale, () => {
+  void (async () => {
+    try {
+      candidates.value = await listJournalCandidates(locale.value as 'ru' | 'en')
+    } catch (caught) {
+      error.value = caught instanceof Error ? caught.message : t('journalCandidates.loadError')
+    }
+  })()
 })
 
 async function publish(): Promise<void> {
   if (!selected.value.length) {
-    error.value = 'Выберите хотя бы один материал'
+    error.value = t('journalCandidates.selectError')
     return
   }
   try {
@@ -49,9 +59,9 @@ async function publish(): Promise<void> {
     })
     await replaceJournalIssuePublications(issue.id, selected.value)
     await publishJournalIssue(issue.id)
-    message.value = 'Выпуск опубликован'
+    message.value = t('journalCandidates.published')
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Не удалось опубликовать выпуск'
+    error.value = caught instanceof Error ? caught.message : t('journalCandidates.publishError')
   }
 }
 </script>
@@ -61,19 +71,19 @@ async function publish(): Promise<void> {
     <header class="queue-header">
       <div>
         <p class="eyebrow">WEEKLY JOURNAL</p>
-        <h1>Кандидаты выпуска</h1>
+        <h1>{{ t('journalCandidates.title') }}</h1>
       </div>
-      <p>Последние 7 дней UTC. Счёт: средняя оценка + 0,1 за каждый видимый комментарий.</p>
+      <p>{{ t('journalCandidates.description') }}</p>
     </header>
     <form class="dashboard-card" @submit.prevent="publish">
       <label
-        >Название выпуска<input v-model.trim="title" required minlength="5" maxlength="240"
+        >{{ t('journalCandidates.issueLabel') }}<input v-model.trim="title" required minlength="5" maxlength="240"
       /></label>
-      <button class="button button-primary">Опубликовать выпуск</button>
+      <button class="button button-primary">{{ t('journalCandidates.publish') }}</button>
     </form>
     <p v-if="message" class="dashboard-message">{{ message }}</p>
     <p v-if="error" class="form-error">{{ error }}</p>
-    <p v-else-if="!candidates.length" class="empty-state">За эту неделю кандидатов пока нет.</p>
+    <p v-else-if="!candidates.length" class="empty-state">{{ t('journalCandidates.empty') }}</p>
     <ol v-else class="queue-list journal-candidates">
       <li v-for="candidate in candidates" :key="candidate.id" class="dashboard-card">
         <label class="checkbox-label"
@@ -88,9 +98,9 @@ async function publish(): Promise<void> {
           <strong>{{ candidate.score.toFixed(1) }}</strong
           ><small
             >★ {{ candidate.average_rating.toFixed(1) }} ·
-            {{ candidate.comment_count }} комм.</small
+            {{ candidate.comment_count }} {{ t('journalCandidates.comments') }}</small
           ><RouterLink class="text-link" :to="`/publications/${candidate.id}`"
-            >Открыть →</RouterLink
+            >{{ t('journalCandidates.open') }}</RouterLink
           >
         </div>
       </li>

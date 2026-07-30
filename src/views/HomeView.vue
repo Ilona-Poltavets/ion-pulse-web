@@ -124,9 +124,9 @@ async function loadCategories(): Promise<void> {
       </button>
     </div>
     <form class="feed-search" role="search" @submit.prevent="submitSearch">
-      <label for="feed-search">Поиск материалов</label>
+      <label for="feed-search">{{ t('publications.searchLabel') }}</label>
       <input id="feed-search" v-model.trim="searchQuery" maxlength="120" />
-      <button class="button button-secondary">Найти</button>
+      <button class="button button-secondary">{{ t('publications.searchAction') }}</button>
     </form>
 
     <p v-if="feedError" class="form-error">{{ feedError }}</p>
@@ -159,7 +159,7 @@ async function loadCategories(): Promise<void> {
       :disabled="isLoadingMore"
       @click="loadFeed(false)"
     >
-      {{ isLoadingMore ? 'Загрузка…' : 'Показать ещё' }}
+      {{ isLoadingMore ? t('publications.loadingMore') : t('publications.loadMore') }}
     </button>
   </section>
 

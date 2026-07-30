@@ -11,7 +11,11 @@ const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 
-const nextLocale = computed<SupportedLocale>(() => (locale.value === 'ru' ? 'en' : 'ru'))
+const isStaff = computed(() =>
+  auth.user?.roles.some((role) =>
+    ['content_manager', 'editor', 'moderator', 'administrator'].includes(role),
+  ),
+)
 
 function setLocale(next: SupportedLocale): void {
   locale.value = next
@@ -43,7 +47,7 @@ void auth.restore()
       <nav class="main-navigation" :aria-label="t('navigation.primary')">
         <RouterLink to="/">{{ t('navigation.feed') }}</RouterLink>
         <RouterLink to="/#categories">{{ t('navigation.categories') }}</RouterLink>
-        <RouterLink to="/journal">Журнал</RouterLink>
+        <RouterLink to="/journal">{{ t('navigation.journal') }}</RouterLink>
         <RouterLink v-if="auth.isAuthenticated" to="/write">{{ t('navigation.write') }}</RouterLink>
       </nav>
 
@@ -54,49 +58,21 @@ void auth.restore()
         <RouterLink v-else class="account-link" to="/profile">{{
           auth.user?.display_name
         }}</RouterLink>
-        <RouterLink
-          v-if="
-            auth.user?.roles.includes('content_manager') ||
-            auth.user?.roles.includes('administrator')
-          "
-          class="account-link"
-          to="/content/categories"
-          >Категории</RouterLink
-        >
-        <RouterLink
-          v-if="auth.user?.roles.includes('administrator')"
-          class="account-link"
-          to="/admin/author-applications"
-          >{{ t('navigation.admin') }}</RouterLink
-        >
-        <RouterLink
-          v-if="auth.user?.roles.includes('administrator')"
-          class="account-link"
-          to="/admin/users"
-          >Роли</RouterLink
-        >
-        <RouterLink
-          v-if="auth.user?.roles.includes('editor') || auth.user?.roles.includes('administrator')"
-          class="account-link"
-          to="/editorial-queue"
-          >{{ t('navigation.editorial') }}</RouterLink
-        >
-        <RouterLink
-          v-if="
-            auth.user?.roles.some((role) => ['editor', 'moderator', 'administrator'].includes(role))
-          "
-          class="account-link"
-          to="/journal/candidates"
-          >Журнал</RouterLink
-        >
-        <RouterLink
-          v-if="
-            auth.user?.roles.includes('moderator') || auth.user?.roles.includes('administrator')
-          "
-          class="account-link"
-          to="/moderation/reports"
-          >{{ t('navigation.moderation') }}</RouterLink
-        >
+        <details v-if="isStaff" class="workspace-menu">
+          <summary>{{ t('navigation.workspace') }}</summary>
+          <div class="workspace-menu-panel">
+            <RouterLink
+              v-if="auth.user?.roles.includes('content_manager') || auth.user?.roles.includes('administrator')"
+              to="/content/categories"
+              >{{ t('navigation.categories') }}</RouterLink
+            >
+            <RouterLink v-if="auth.user?.roles.includes('administrator')" to="/admin/author-applications">{{ t('navigation.admin') }}</RouterLink>
+            <RouterLink v-if="auth.user?.roles.includes('administrator')" to="/admin/users">{{ t('navigation.roles') }}</RouterLink>
+            <RouterLink v-if="auth.user?.roles.includes('editor') || auth.user?.roles.includes('administrator')" to="/editorial-queue">{{ t('navigation.editorial') }}</RouterLink>
+            <RouterLink v-if="auth.user?.roles.some((role) => ['editor', 'moderator', 'administrator'].includes(role))" to="/journal/candidates">{{ t('navigation.journal') }}</RouterLink>
+            <RouterLink v-if="auth.user?.roles.includes('moderator') || auth.user?.roles.includes('administrator')" to="/moderation/reports">{{ t('navigation.moderation') }}</RouterLink>
+          </div>
+        </details>
         <button
           v-if="auth.isAuthenticated"
           class="account-link"
@@ -105,11 +81,13 @@ void auth.restore()
         >
           {{ t('navigation.logout') }}
         </button>
-        <button class="locale-switcher" type="button" @click="setLocale(nextLocale)">
-          <span>{{ locale.toUpperCase() }}</span>
-          <span aria-hidden="true">→</span>
-          <strong>{{ nextLocale.toUpperCase() }}</strong>
-        </button>
+        <label class="locale-switcher">
+          <span class="sr-only">{{ t('navigation.language') }}</span>
+          <select :value="locale" :aria-label="t('navigation.language')" @change="setLocale(($event.target as HTMLSelectElement).value as SupportedLocale)">
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+          </select>
+        </label>
       </div>
     </header>
 

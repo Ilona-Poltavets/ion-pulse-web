@@ -11,6 +11,10 @@ export const messages = {
       admin: 'Админ',
       editorial: 'Редактор',
       moderation: 'Модерация',
+      journal: 'Журнал',
+      roles: 'Роли',
+      workspace: 'Рабочая зона',
+      language: 'Язык интерфейса',
     },
     hero: {
       eyebrow: 'Игровая медиаплатформа · RU / EN',
@@ -77,9 +81,18 @@ export const messages = {
       all: 'Все материалы',
       filterLabel: 'Фильтр по категории',
       loadingFeed: 'Загружаем ленту…',
+      searchLabel: 'Поиск материалов',
+      searchAction: 'Найти',
+      loadMore: 'Показать ещё',
+      loadingMore: 'Загрузка…',
     },
     footer: {
       tagline: 'One story. Two audiences.',
+    },
+    journalCandidates: {
+      title: 'Кандидаты выпуска', description: 'Последние 7 дней UTC. Счёт: средняя оценка + 0,1 за каждый видимый комментарий.',
+      issueTitle: 'Выпуск недели', issueLabel: 'Название выпуска', publish: 'Опубликовать выпуск', empty: 'За эту неделю кандидатов пока нет.',
+      open: 'Открыть →', comments: 'комм.', selectError: 'Выберите хотя бы один материал', published: 'Выпуск опубликован', loadError: 'Не удалось загрузить кандидатов', publishError: 'Не удалось опубликовать выпуск',
     },
   },
   en: {
@@ -94,6 +107,10 @@ export const messages = {
       admin: 'Admin',
       editorial: 'Editorial',
       moderation: 'Moderation',
+      journal: 'Journal',
+      roles: 'Roles',
+      workspace: 'Workspace',
+      language: 'Interface language',
     },
     hero: {
       eyebrow: 'Gaming media platform · RU / EN',
@@ -161,9 +178,18 @@ export const messages = {
       all: 'All materials',
       filterLabel: 'Filter by category',
       loadingFeed: 'Loading feed…',
+      searchLabel: 'Search stories',
+      searchAction: 'Search',
+      loadMore: 'Show more',
+      loadingMore: 'Loading…',
     },
     footer: {
       tagline: 'One story. Two audiences.',
+    },
+    journalCandidates: {
+      title: 'Issue candidates', description: 'The last 7 days UTC. Score: average rating + 0.1 for every visible comment.',
+      issueTitle: 'Weekly issue', issueLabel: 'Issue title', publish: 'Publish issue', empty: 'There are no candidates this week.',
+      open: 'Open →', comments: 'comments', selectError: 'Select at least one story', published: 'Issue published', loadError: 'Could not load candidates', publishError: 'Could not publish issue',
     },
   },
 } as const
