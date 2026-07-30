@@ -108,6 +108,7 @@ export const messages = {
       newPassword: 'Новый пароль', confirmPassword: 'Повторите пароль', passwordsMismatch: 'Пароли не совпадают',
       recoverySent: 'Если такой аккаунт существует, ссылка для восстановления уже отправлена.', tokenMissing: 'В ссылке восстановления отсутствует токен',
       recoveryError: 'Не удалось восстановить доступ', sendLink: 'Отправить ссылку', savePassword: 'Сохранить новый пароль', backToLogin: 'Вернуться ко входу',
+      appealTitle: 'Обжаловать блокировку', appealIntro: 'Подтвердите аккаунт и объясните, почему ограничение стоит пересмотреть.', reason: 'Причина', submitAppeal: 'Отправить обращение', appealSent: 'Обращение отправлено модератору.', appealError: 'Не удалось отправить обращение',
     },
     journal: {
       title: 'Журнал', empty: 'Опубликованных выпусков пока нет.', issues: 'Выпуски журнала',
@@ -226,6 +227,7 @@ export const messages = {
       newPassword: 'New password', confirmPassword: 'Confirm password', passwordsMismatch: 'Passwords do not match',
       recoverySent: 'If that account exists, a recovery link has been sent.', tokenMissing: 'The recovery link has no token',
       recoveryError: 'Could not recover access', sendLink: 'Send link', savePassword: 'Save new password', backToLogin: 'Back to log in',
+      appealTitle: 'Appeal a suspension', appealIntro: 'Confirm your account and explain why the restriction should be reconsidered.', reason: 'Reason', submitAppeal: 'Send appeal', appealSent: 'Your appeal was sent to moderation.', appealError: 'Could not send appeal',
     },
     journal: {
       title: 'Journal', empty: 'There are no published issues yet.', issues: 'Journal issues',

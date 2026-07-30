@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { submitCurrentSanctionAppeal } from '@/services/api'
 
@@ -9,6 +10,7 @@ const reason = ref('')
 const error = ref('')
 const message = ref('')
 const isSaving = ref(false)
+const { t } = useI18n()
 
 async function submit(): Promise<void> {
   error.value = ''
@@ -19,9 +21,9 @@ async function submit(): Promise<void> {
       password: password.value,
       reason: reason.value,
     })
-    message.value = 'Обращение отправлено модератору.'
+    message.value = t('auth.appealSent')
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Не удалось отправить обращение'
+    error.value = caught instanceof Error ? caught.message : t('auth.appealError')
   } finally {
     isSaving.value = false
   }
@@ -32,19 +34,19 @@ async function submit(): Promise<void> {
   <section class="auth-page">
     <form class="auth-card" @submit.prevent="submit">
       <p class="eyebrow">SANCTION APPEAL</p>
-      <h1>Обжаловать блокировку</h1>
-      <p>Подтвердите аккаунт и объясните, почему ограничение стоит пересмотреть.</p>
+      <h1>{{ t('auth.appealTitle') }}</h1>
+      <p>{{ t('auth.appealIntro') }}</p>
       <label>Email<input v-model.trim="email" required type="email" autocomplete="email" /></label>
       <label
-        >Пароль<input v-model="password" required type="password" autocomplete="current-password"
+        >{{ t('auth.password') }}<input v-model="password" required type="password" autocomplete="current-password"
       /></label>
       <label
-        >Причина<textarea v-model.trim="reason" required minlength="10" maxlength="2000" />
+        >{{ t('auth.reason') }}<textarea v-model.trim="reason" required minlength="10" maxlength="2000" />
       </label>
       <p v-if="error" class="form-error">{{ error }}</p>
       <p v-if="message" class="dashboard-message">{{ message }}</p>
-      <button class="button button-primary" :disabled="isSaving">Отправить обращение</button>
-      <RouterLink class="auth-link" to="/login">Вернуться ко входу</RouterLink>
+      <button class="button button-primary" :disabled="isSaving">{{ t('auth.submitAppeal') }}</button>
+      <RouterLink class="auth-link" to="/login">{{ t('auth.backToLogin') }}</RouterLink>
     </form>
   </section>
 </template>
