@@ -116,6 +116,7 @@ export const messages = {
       issueNavigation: 'Переход между выпусками', previous: '← Предыдущий выпуск', next: 'Следующий выпуск →',
       loadError: 'Не удалось загрузить журнал', openError: 'Не удалось открыть выпуск',
     },
+    profile: { newStory: 'Новый материал' },
   },
   en: {
     navigation: {
@@ -235,5 +236,6 @@ export const messages = {
       issueNavigation: 'Issue navigation', previous: '← Previous issue', next: 'Next issue →',
       loadError: 'Could not load journal', openError: 'Could not open issue',
     },
+    profile: { newStory: 'New story' },
   },
 } as const

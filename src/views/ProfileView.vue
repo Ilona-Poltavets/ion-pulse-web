@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 import {
   createAuthorApplication,
   deleteMyAccount,
@@ -24,6 +25,7 @@ import {
   type PublicationAiReview,
 } from '@/services/api'
 const auth = useAuthStore()
+const { t } = useI18n()
 const router = useRouter()
 const displayName = ref('')
 const message = ref('')
@@ -183,7 +185,7 @@ async function submitApplication(): Promise<void> {
           </span>
         </div>
       </div>
-      <RouterLink class="button button-primary" to="/write">Новый материал</RouterLink>
+      <RouterLink class="button button-primary" to="/write">{{ t('profile.newStory') }}</RouterLink>
     </header>
 
     <p v-if="message" class="dashboard-message">{{ message }}</p>
