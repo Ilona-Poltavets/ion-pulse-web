@@ -35,6 +35,16 @@ certificate paths, and `/srv/ion-pulse-web/dist` before installing it. Configure
 `ION_PULSE_CORS_ORIGINS` with the public HTTPS origin even when same-origin deployment is used,
 so any future cross-origin tooling remains explicitly controlled.
 
+For distributed abuse protection, install `deploy/ion-pulse-rate-limits.conf` in Nginx's `http`
+context (for example, `/etc/nginx/conf.d/`) before enabling the server template. It limits auth
+requests by client IP to 6/minute and comment/report paths to 30/minute; the API applies its
+member-aware limits as a second layer. Validate the combined configuration before reload:
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
 ## Checks
 
 ```bash
