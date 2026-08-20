@@ -587,7 +587,7 @@ export async function logout(): Promise<void> {
 
 export async function exportMyData(): Promise<void> {
   const response = await fetch(`${apiUrl}/api/v1/auth/me/export`, { credentials: 'include' })
-  if (!response.ok) throw new Error('Не удалось экспортировать данные')
+  if (!response.ok) throw new Error('Could not export data')
   const url = URL.createObjectURL(await response.blob())
   const link = document.createElement('a')
   link.href = url

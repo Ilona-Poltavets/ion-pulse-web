@@ -102,8 +102,8 @@ async function exportData(): Promise<void> {
   try {
     await exportMyData()
     message.value = t('profile.exportReady')
-  } catch (error) {
-    message.value = error instanceof Error ? error.message : t('profile.exportError')
+  } catch {
+    message.value = t('profile.exportError')
   }
 }
 async function deleteAccount(): Promise<void> {
