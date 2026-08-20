@@ -30,8 +30,9 @@ npm run build
 ```
 
 `deploy/ion-pulse.conf` is an Nginx template that serves `dist/`, forwards `/api/` to the API
-service on `127.0.0.1:8000`, and preserves Vue history routes. Replace `example.com`, the TLS
-certificate paths, and `/srv/ion-pulse-web/dist` before installing it. Configure the API's
+service on `127.0.0.1:8000`, forwards the API-generated `/sitemap.xml` and `/robots.txt`, and
+preserves Vue history routes. Replace `example.com`, the TLS certificate paths, and
+`/srv/ion-pulse-web/dist` before installing it. Configure the API's
 `ION_PULSE_CORS_ORIGINS` with the public HTTPS origin even when same-origin deployment is used,
 so any future cross-origin tooling remains explicitly controlled.
 

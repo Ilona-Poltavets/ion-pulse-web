@@ -106,6 +106,8 @@
 - GitHub-репозиторий переименован из `habr-clone-vue` в `ion-pulse-web`.
 - Production-сборка web по умолчанию обращается к API на текущем origin, а не к
   `localhost`.
+- Nginx same-origin template теперь передаёт `/sitemap.xml` и `/robots.txt` в
+  API, чтобы SPA fallback не подменял SEO-файлы HTML-страницей.
 
 ### Removed
 
