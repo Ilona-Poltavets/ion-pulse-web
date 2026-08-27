@@ -162,6 +162,8 @@ export const messages = {
     },
     journal: {
       title: 'Журнал',
+      weeklyIssue: 'Еженедельный выпуск',
+      virtualReader: 'Виртуальный разворот выпуска',
       empty: 'Опубликованных выпусков пока нет.',
       issues: 'Выпуски журнала',
       contents: 'Содержание',
@@ -577,6 +579,8 @@ export const messages = {
     },
     journal: {
       title: 'Journal',
+      weeklyIssue: 'Weekly issue',
+      virtualReader: 'Virtual issue spread',
       empty: 'There are no published issues yet.',
       issues: 'Journal issues',
       contents: 'Contents',

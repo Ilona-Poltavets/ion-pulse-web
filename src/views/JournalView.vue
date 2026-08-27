@@ -88,18 +88,35 @@ watch(locale, () => {
       </button>
     </nav>
     <section v-if="selected" class="journal-reader" aria-labelledby="journal-title">
-      <header class="journal-cover">
-        <p class="eyebrow">WEEKLY ISSUE</p>
-        <p class="journal-cover-number">{{ String(selectedIssueIndex + 1).padStart(2, '0') }}</p>
-        <h2 id="journal-title">{{ selected.title }}</h2>
-        <p>
-          {{ new Date(selected.period_start).toLocaleDateString(locale) }} —
-          {{ new Date(selected.period_end).toLocaleDateString(locale) }}
-        </p>
-      </header>
+      <section class="journal-virtual" :aria-label="t('journal.virtualReader')">
+        <div class="journal-book">
+          <header class="journal-book__cover">
+            <p class="eyebrow">{{ t('journal.weeklyIssue') }}</p>
+            <p class="journal-cover-number">{{ String(selectedIssueIndex + 1).padStart(2, '0') }}</p>
+            <h2 id="journal-title">{{ selected.title }}</h2>
+            <p>
+              {{ new Date(selected.period_start).toLocaleDateString(locale) }} —
+              {{ new Date(selected.period_end).toLocaleDateString(locale) }}
+            </p>
+            <span>ION PULSE</span>
+          </header>
+          <RouterLink v-if="publications[0]" class="journal-book__page journal-book__page--left" :to="`/publications/${publications[0].id}`">
+            <small>{{ t('journal.page', { number: '01' }) }}</small>
+            <span>{{ publications[0].category_slug }}</span>
+            <h3>{{ publications[0].title }}</h3>
+            <p>{{ publications[0].summary }}</p>
+          </RouterLink>
+          <RouterLink v-if="publications[1]" class="journal-book__page journal-book__page--right" :to="`/publications/${publications[1].id}`">
+            <small>{{ t('journal.page', { number: '02' }) }}</small>
+            <span>{{ publications[1].category_slug }}</span>
+            <h3>{{ publications[1].title }}</h3>
+            <p>{{ publications[1].summary }}</p>
+          </RouterLink>
+        </div>
+      </section>
       <div class="journal-contents">
         <header>
-          <p class="eyebrow">CONTENTS</p>
+          <p class="eyebrow">{{ t('journal.weeklyIssue') }}</p>
           <h3>{{ t('journal.contents') }}</h3>
         </header>
         <ol>
