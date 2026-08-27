@@ -75,6 +75,11 @@ function selectCategory(slug: string): void {
   void loadFeed(true)
 }
 
+function selectCategoryFromTile(slug: string): void {
+  selectCategory(slug)
+  document.querySelector('#stories')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 function submitSearch(): void {
   void loadFeed(true)
 }
@@ -89,7 +94,7 @@ async function loadCategories(): Promise<void> {
 </script>
 
 <template>
-  <section class="feed-page" aria-labelledby="feed-title">
+  <section id="stories" class="feed-page" aria-labelledby="feed-title">
     <div class="section-heading">
       <div>
         <p class="eyebrow">{{ t('publications.eyebrow') }}</p>
@@ -191,12 +196,18 @@ async function loadCategories(): Promise<void> {
     </div>
 
     <div class="category-grid">
-      <article v-for="(category, index) in categories" :key="category.slug" class="category-card">
+      <button
+        v-for="(category, index) in categories"
+        :key="category.slug"
+        class="category-card"
+        type="button"
+        @click="selectCategoryFromTile(category.slug)"
+      >
         <span>{{ String(index + 1).padStart(2, '0') }}</span>
         <h3>{{ category.name }}</h3>
         <p>{{ category.description }}</p>
         <i aria-hidden="true">↗</i>
-      </article>
+      </button>
     </div>
   </section>
 </template>

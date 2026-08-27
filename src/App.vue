@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -10,6 +10,7 @@ const { locale, t } = useI18n()
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const localeMenu = ref<HTMLDetailsElement | null>(null)
 
 const isStaff = computed(() =>
   auth.user?.roles.some((role) =>
@@ -18,6 +19,7 @@ const isStaff = computed(() =>
 )
 
 function setLocale(next: SupportedLocale): void {
+  localeMenu.value?.removeAttribute('open')
   locale.value = next
   document.documentElement.lang = next
   localStorage.setItem('ion-pulse-locale', next)
@@ -35,23 +37,24 @@ void auth.restore()
 <template>
   <div class="app-shell">
     <header class="site-header">
-      <RouterLink class="brand" to="/" aria-label="Ion Pulse">
+      <div class="site-header__inner">
+        <RouterLink class="brand" to="/" aria-label="Ion Pulse">
         <span class="brand-mark" aria-hidden="true">
           <span></span>
           <span></span>
           <span></span>
         </span>
         <span>ION PULSE</span>
-      </RouterLink>
+        </RouterLink>
 
-      <nav class="main-navigation" :aria-label="t('navigation.primary')">
+        <nav class="main-navigation" :aria-label="t('navigation.primary')">
         <RouterLink to="/">{{ t('navigation.feed') }}</RouterLink>
         <RouterLink to="/#categories">{{ t('navigation.categories') }}</RouterLink>
         <RouterLink to="/journal">{{ t('navigation.journal') }}</RouterLink>
         <RouterLink v-if="auth.isAuthenticated" to="/write">{{ t('navigation.write') }}</RouterLink>
-      </nav>
+        </nav>
 
-      <div class="header-actions">
+        <div class="header-actions">
         <RouterLink v-if="!auth.isAuthenticated" class="account-link" to="/login">{{
           t('navigation.login')
         }}</RouterLink>
@@ -110,21 +113,25 @@ void auth.restore()
         >
           {{ t('navigation.logout') }}
         </button>
-        <label class="locale-switcher">
+          <details ref="localeMenu" class="locale-switcher">
           <span class="sr-only">{{ t('navigation.language') }}</span>
-          <select
-            :value="locale"
-            :aria-label="t('navigation.language')"
-            @change="setLocale(($event.target as HTMLSelectElement).value as SupportedLocale)"
-          >
-            <option value="ru">Русский</option>
-            <option value="en">English</option>
-          </select>
-        </label>
+            <summary :aria-label="t('navigation.language')">
+              <span>{{ locale.toUpperCase() }}</span>
+            </summary>
+            <div class="locale-switcher__menu">
+              <button :class="{ active: locale === 'ru' }" type="button" @click="setLocale('ru')">
+                <span>RU</span> Русский
+              </button>
+              <button :class="{ active: locale === 'en' }" type="button" @click="setLocale('en')">
+                <span>EN</span> English
+              </button>
+            </div>
+          </details>
+        </div>
       </div>
     </header>
 
-    <main>
+    <main class="site-main">
       <RouterView />
     </main>
 
