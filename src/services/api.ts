@@ -487,6 +487,11 @@ export function listJournalCandidates(
     `/publications/journal-candidates?locale=${locale}${month ? `&month=${month}` : ''}`,
   )
 }
+export function uploadJournalImage(image: File): Promise<{ image_url: string }> {
+  const body = new FormData()
+  body.append('image', image)
+  return request('/journal/images', { method: 'POST', body })
+}
 export function createJournalIssue(payload: {
   title: string
   period_start: string

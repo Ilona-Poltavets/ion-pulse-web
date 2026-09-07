@@ -248,7 +248,7 @@ onBeforeUnmount(() => {
   right: 7%;
   display: flex;
   justify-content: space-between;
-  color: #fff;
+  color: var(--ink-accent);
   font: 800 22px/1 sans-serif;
   letter-spacing: -1px;
 }
@@ -268,6 +268,10 @@ onBeforeUnmount(() => {
   margin: 0 0 0.3em;
   font: inherit;
   font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: var(--ink-accent);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.14em;
 }
 .magazine-cover-copy .content-prose {
   font-size: 0.42em;

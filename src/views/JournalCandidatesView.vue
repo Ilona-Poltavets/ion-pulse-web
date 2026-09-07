@@ -8,6 +8,7 @@ import {
   listJournalCandidates,
   listJournalDrafts,
   saveJournalIssue,
+  uploadJournalImage,
   publishJournalIssue,
   type JournalCandidate,
   type JournalIssue,
@@ -33,6 +34,7 @@ const error = ref('')
 const message = ref('')
 const saved = ref('')
 const published = ref(false)
+const uploadingImage = ref(false)
 const templates: Array<{
   id: JournalPage['template']
   name: string
@@ -192,6 +194,21 @@ function applyPreset(target: JournalPage): void {
   if (preset) Object.assign(target, preset.defaults)
   if (['cover', 'title', 'finale'].includes(target.template)) target.publication_ids = []
 }
+async function selectImage(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file || !page.value) return
+  uploadingImage.value = true
+  error.value = ''
+  try {
+    page.value.image_url = (await uploadJournalImage(file)).image_url
+  } catch (caught) {
+    error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить изображение.'
+  } finally {
+    uploadingImage.value = false
+    input.value = ''
+  }
+}
 function normalizePage(value: JournalPage): JournalPage {
   return {
     ...value,
@@ -266,7 +283,6 @@ async function save() {
   if (
     title.value.length < 5 ||
     !pages.value.length ||
-    !pages.value.some((p) => p.publication_ids.length) ||
     pages.value.some(
       (p) => !['cover', 'title', 'finale'].includes(p.template) && !p.publication_ids.length,
     )
@@ -387,6 +403,15 @@ async function publish() {
               <label
                 >Изображение (URL)<input v-model="page.image_url" placeholder="https://…"
               /></label>
+              <label class="magazine-upload">
+                <span>{{ uploadingImage ? 'Загружаем…' : 'Загрузить с устройства' }}</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  :disabled="uploadingImage"
+                  @change="selectImage"
+                />
+              </label>
               <label
                 >Расположение изображения<select v-model="page.image_position">
                   <option value="full">На всю ширину</option>
@@ -533,6 +558,32 @@ async function publish() {
   border-radius: 4px;
   background: var(--surface);
   color: inherit;
+}
+.magazine-upload {
+  padding: 10px;
+  border: 1px dashed rgb(199 255 94 / 45%);
+  border-radius: 7px;
+  background: rgb(199 255 94 / 5%);
+}
+.magazine-upload > span {
+  color: var(--lime);
+  font-size: 13px;
+  font-weight: 700;
+}
+.magazine-upload input[type='file'] {
+  padding: 0;
+  border: 0;
+  font-size: 11px;
+}
+.magazine-upload input[type='file']::file-selector-button {
+  margin-right: 10px;
+  padding: 8px 10px;
+  color: #10130e;
+  background: var(--lime);
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 700;
 }
 .magazine-template-picker {
   display: flex;
