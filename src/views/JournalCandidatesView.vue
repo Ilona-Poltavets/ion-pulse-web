@@ -230,11 +230,12 @@ function normalizePage(value: JournalPage): JournalPage {
   }
 }
 
-function splitText(value: string, limit: number): string[] {
+function splitText(value: string, firstLimit: number, continuationLimit = firstLimit): string[] {
   const words = value.trim().split(/\s+/)
   const chunks: string[] = []
   let chunk = ''
   for (const word of words) {
+    const limit = chunks.length ? continuationLimit : firstLimit
     if (chunk && `${chunk} ${word}`.length > limit) {
       chunks.push(chunk)
       chunk = word
@@ -248,8 +249,15 @@ function paginatePage(current: JournalPage) {
   if (['cover', 'title', 'finale'].includes(current.template)) return
   const currentIndex = pages.value.indexOf(current)
   if (currentIndex < 0) return
-  const limit = current.template === 'columns' ? 2600 : current.image_url ? 1200 : 1800
-  const chunks = splitText(current.text, limit)
+  const continuationLimit = current.template === 'columns' ? 2200 : 1800
+  const firstLimit = current.continuation
+    ? continuationLimit
+    : current.image_url
+      ? 700
+      : current.one_post_per_page
+        ? 1100
+        : 1400
+  const chunks = splitText(current.text, firstLimit, continuationLimit)
   if (chunks.length < 2) return
   current.text = chunks.shift() || ''
   const continuationPages = chunks.map((text, index) =>

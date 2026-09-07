@@ -388,6 +388,9 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr 1fr;
   gap: 22px;
 }
+.magazine-page--briefs .magazine-paper-content.single-post-layout .magazine-stories {
+  grid-template-columns: minmax(0, 1fr);
+}
 .magazine-page--briefs .magazine-story {
   border-top: 5px solid var(--ink-accent);
   padding-top: 14px;
