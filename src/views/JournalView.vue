@@ -45,6 +45,7 @@ const pages = computed<JournalPage[]>(() =>
         text_width: 84,
         text_size: 38,
         continuation: false,
+        one_post_per_page: false,
       })),
 )
 const ranked = computed(() => [...materials.value].sort((a, b) => b.score - a.score))

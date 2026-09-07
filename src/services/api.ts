@@ -128,6 +128,7 @@ export interface JournalPage {
   text_width: number
   text_size: number
   continuation: boolean
+  one_post_per_page: boolean
 }
 export interface JournalIssue {
   pages: JournalPage[]

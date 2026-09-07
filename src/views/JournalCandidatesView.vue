@@ -181,6 +181,7 @@ function add(template: JournalPage['template']) {
     text_width: 84,
     text_size: template === 'cover' ? 54 : 38,
     continuation: false,
+    one_post_per_page: false,
     ...preset?.defaults,
   })
   active.value = pages.value.length - 1
@@ -221,6 +222,7 @@ function normalizePage(value: JournalPage): JournalPage {
     text_width: value.text_width ?? 84,
     text_size: value.text_size ?? (value.template === 'cover' ? 54 : 38),
     continuation: value.continuation ?? false,
+    one_post_per_page: value.one_post_per_page ?? false,
   }
 }
 
@@ -238,9 +240,10 @@ function splitText(value: string, limit: number): string[] {
   return chunks
 }
 
-function paginateText() {
-  if (!page.value || page.value.template === 'cover') return
-  const current = page.value
+function paginatePage(current: JournalPage) {
+  if (['cover', 'title', 'finale'].includes(current.template)) return
+  const currentIndex = pages.value.indexOf(current)
+  if (currentIndex < 0) return
   const limit = current.template === 'columns' ? 2600 : current.image_url ? 1200 : 1800
   const chunks = splitText(current.text, limit)
   if (chunks.length < 2) return
@@ -255,8 +258,17 @@ function paginateText() {
       continuation: true,
     }),
   )
-  pages.value.splice(active.value + 1, 0, ...continuationPages)
+  pages.value.splice(currentIndex + 1, 0, ...continuationPages)
   message.value = `Текст перенесён на ${continuationPages.length} стр. продолжения.`
+}
+function paginateText() {
+  if (page.value) paginatePage(page.value)
+}
+function hydratePage(target: JournalPage, publicationId: string): void {
+  const publication = candidates.value.find((item) => item.id === publicationId)
+  if (!publication) return
+  target.text = contentText(publication.body)
+  requestAnimationFrame(() => paginatePage(target))
 }
 function toggleMaterial(target: JournalPage, publicationId: string, selected: boolean): void {
   if (!selected) {
@@ -270,12 +282,51 @@ function toggleMaterial(target: JournalPage, publicationId: string, selected: bo
     }
     return
   }
+  if (target.one_post_per_page && target.publication_ids.length) {
+    const targetIndex = pages.value.indexOf(target)
+    const separatePage = normalizePage({
+      ...target,
+      publication_ids: [],
+      heading: '',
+      text: '',
+      image_url: '',
+      continuation: false,
+    })
+    pages.value.splice(targetIndex + 1, 0, separatePage)
+    active.value = targetIndex + 1
+    toggleMaterial(separatePage, publicationId, true)
+    return
+  }
   if (!target.publication_ids.includes(publicationId)) target.publication_ids.push(publicationId)
   if (target.publication_ids.length !== 1 || target.text.trim()) return
-  const publication = candidates.value.find((item) => item.id === publicationId)
-  if (!publication) return
-  target.text = contentText(publication.body)
-  requestAnimationFrame(paginateText)
+  hydratePage(target, publicationId)
+}
+function setOnePostPerPage(target: JournalPage, enabled: boolean): void {
+  target.one_post_per_page = enabled
+  if (!enabled || target.publication_ids.length < 2) {
+    const publicationId = target.publication_ids[0]
+    if (enabled && publicationId) {
+      if (!target.text.trim()) hydratePage(target, publicationId)
+      else requestAnimationFrame(() => paginatePage(target))
+    }
+    return
+  }
+  const [first, ...rest] = target.publication_ids
+  target.publication_ids = first ? [first] : []
+  if (first && !target.text.trim()) hydratePage(target, first)
+  let insertionIndex = pages.value.indexOf(target) + 1
+  for (const publicationId of rest) {
+    const separatePage = normalizePage({
+      ...target,
+      publication_ids: [publicationId],
+      heading: '',
+      text: '',
+      image_url: '',
+      continuation: false,
+    })
+    pages.value.splice(insertionIndex++, 0, separatePage)
+    hydratePage(separatePage, publicationId)
+  }
 }
 function selectPage(index: number): void {
   active.value = index
@@ -514,6 +565,20 @@ async function publish() {
               </label>
               <h3 v-if="!standalonePage">Материалы за два месяца</h3>
               <template v-if="!standalonePage">
+                <label class="checkbox-label magazine-flow-option">
+                  <input
+                    type="checkbox"
+                    :checked="page.one_post_per_page"
+                    @change="setOnePostPerPage(page, ($event.target as HTMLInputElement).checked)"
+                  />
+                  <span
+                    ><strong>Один пост на страницу</strong
+                    ><small
+                      >Текст поста идёт в две колонки и автоматически продолжается на новых
+                      страницах.</small
+                    ></span
+                  >
+                </label>
                 <input
                   v-model="search"
                   aria-label="Поиск новостей"
@@ -808,6 +873,31 @@ async function publish() {
   display: block;
   margin-top: 8px;
   opacity: 0.6;
+}
+.magazine-flow-option {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 10px !important;
+  padding: 12px;
+  border: 1px solid rgb(197 239 88 / 28%);
+  border-radius: 7px;
+  background: rgb(197 239 88 / 6%);
+  cursor: pointer;
+}
+.magazine-flow-option input {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 3px 0 0;
+  accent-color: var(--lime);
+}
+.magazine-flow-option span {
+  display: grid;
+  gap: 4px;
+}
+.magazine-flow-option small {
+  color: #a6ad9f;
+  font-size: 12px;
+  line-height: 1.4;
 }
 @media (max-width: 900px) {
   .magazine-template-picker {

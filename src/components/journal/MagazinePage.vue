@@ -90,7 +90,10 @@ onBeforeUnmount(() => {
         class="magazine-paper-content"
         :class="[
           `image-${page.image_position || 'full'}`,
-          { 'is-continuation': page.continuation },
+          {
+            'is-continuation': page.continuation,
+            'single-post-layout': page.one_post_per_page || stories.length === 1,
+          },
         ]"
       >
         <img
@@ -205,6 +208,9 @@ onBeforeUnmount(() => {
   line-height: 1.65;
   white-space: normal;
   overflow-wrap: anywhere;
+  column-count: 1;
+}
+.magazine-paper-content.single-post-layout .magazine-copy {
   column-count: 2;
   column-gap: 22px;
   column-rule: 1px solid #23251f1f;
