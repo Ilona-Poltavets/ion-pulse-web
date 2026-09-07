@@ -16,7 +16,9 @@ const stories = computed(() =>
     .map((id) => props.materials.find((item) => item.id === id))
     .filter((item) => !!item),
 )
-const standalone = computed(() => ['cover', 'title', 'finale'].includes(props.page.template))
+const standalone = computed(
+  () => ['cover', 'title', 'finale'].includes(props.page.template) && !props.page.continuation,
+)
 const photoStyle = computed(() => ({
   width: `${props.page.image_width ?? 100}%`,
   height: `${props.page.image_height ?? 38}%`,
@@ -92,7 +94,8 @@ onBeforeUnmount(() => {
           `image-${page.image_position || 'full'}`,
           {
             'is-continuation': page.continuation,
-            'single-post-layout': page.one_post_per_page || stories.length === 1,
+            'single-post-layout':
+              page.continuation || page.one_post_per_page || stories.length === 1,
           },
         ]"
       >
@@ -136,7 +139,7 @@ onBeforeUnmount(() => {
           </section>
         </div>
         <ContentBody
-          v-if="page.text && stories.length > 1"
+          v-if="page.text && stories.length !== 1"
           class="magazine-copy"
           :body="page.text"
         />

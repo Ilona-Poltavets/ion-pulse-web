@@ -131,7 +131,9 @@ const templates: Array<{
 const fingerprint = computed(() => JSON.stringify([title.value, month.value, pages.value]))
 const dirty = computed(() => saved.value !== fingerprint.value)
 const standalonePage = computed(() =>
-  page.value ? ['cover', 'title', 'finale'].includes(page.value.template) : false,
+  page.value
+    ? ['cover', 'title', 'finale'].includes(page.value.template) && !page.value.continuation
+    : false,
 )
 const sorted = computed(() =>
   [...candidates.value]
@@ -246,17 +248,19 @@ function splitText(value: string, firstLimit: number, continuationLimit = firstL
 }
 
 function paginatePage(current: JournalPage) {
-  if (['cover', 'title', 'finale'].includes(current.template)) return
   const currentIndex = pages.value.indexOf(current)
   if (currentIndex < 0) return
+  const standaloneTemplate = ['cover', 'title', 'finale'].includes(current.template)
   const continuationLimit = current.template === 'columns' ? 2200 : 1800
   const firstLimit = current.continuation
     ? continuationLimit
-    : current.image_url
-      ? 700
-      : current.one_post_per_page
-        ? 1100
-        : 1400
+    : standaloneTemplate
+      ? 450
+      : current.image_url
+        ? 700
+        : current.one_post_per_page
+          ? 1100
+          : 1400
   const chunks = splitText(current.text, firstLimit, continuationLimit)
   if (chunks.length < 2) return
   current.text = chunks.shift() || ''
@@ -536,7 +540,12 @@ async function publish() {
               <label>Акцент<input v-model="page.accent" type="color" /></label>
               <template v-if="standalonePage">
                 <label
-                  >Текст обложки<textarea v-model="page.text" rows="5" maxlength="20000" />
+                  >Текст обложки<textarea
+                    v-model="page.text"
+                    rows="5"
+                    maxlength="20000"
+                    @blur="paginateText"
+                  />
                 </label>
                 <label
                   >Позиция текста по горизонтали · {{ page.text_x }}%<input
