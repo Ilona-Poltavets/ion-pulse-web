@@ -127,6 +127,8 @@ export interface Comment {
   author_id: string
   parent_id: string | null
   body: string
+  media_kind: 'gif' | 'sticker' | null
+  media_value: string | null
   created_at: string
 }
 export interface ModeratedComment extends Comment {
@@ -520,7 +522,12 @@ export function listComments(publicationId: string): Promise<Comment[]> {
 }
 export function createComment(
   publicationId: string,
-  payload: { body: string; parent_id?: string },
+  payload: {
+    body: string
+    parent_id?: string
+    media_kind?: 'gif' | 'sticker'
+    media_value?: string
+  },
 ): Promise<Comment> {
   return request(`/publications/${publicationId}/comments`, {
     method: 'POST',

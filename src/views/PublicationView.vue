@@ -36,12 +36,17 @@ const digestItems = ref<DigestItem[]>([])
 const authorSubscriptions = ref<AuthorSubscription[]>([])
 const rating = ref<number | null>(null)
 const commentBody = ref('')
+const mediaPicker = ref<'emoji' | 'sticker' | 'gif' | null>(null)
+const selectedCommentMedia = ref<{ kind: 'gif' | 'sticker'; value: string } | null>(null)
+const gifUrl = ref('')
 const replyTo = ref<string | null>(null)
 const reportReason = ref('')
 const reportTarget = ref<{ type: 'publication' | 'comment'; id: string } | null>(null)
 const error = ref('')
 const loading = ref(true)
 let managedHeadLinks: HTMLLinkElement[] = []
+const emojis = ['😀', '😂', '😍', '🤔', '😭', '😡', '👍', '🔥', '🎮', '🏆', '👾', '💚']
+const stickers = ['🎮✨', '🔥🔥🔥', '🏆😎', '👾⚡', 'GG 💚', 'WOW 🤯', 'NOPE 🙅', 'ИМБА 🚀']
 
 const topLevelComments = computed(() =>
   comments.value.filter((comment) => comment.parent_id === null),
@@ -167,17 +172,45 @@ async function submitComment(): Promise<void> {
     await router.push('/login')
     return
   }
+  if (!commentBody.value.trim() && !selectedCommentMedia.value) {
+    error.value = t('publications.commentContentRequired')
+    return
+  }
   try {
     const comment = await createComment(id, {
       body: commentBody.value,
       parent_id: replyTo.value ?? undefined,
+      media_kind: selectedCommentMedia.value?.kind,
+      media_value: selectedCommentMedia.value?.value,
     })
     comments.value.push(comment)
     commentBody.value = ''
+    selectedCommentMedia.value = null
+    gifUrl.value = ''
+    mediaPicker.value = null
     replyTo.value = null
   } catch (caught) {
     error.value = caught instanceof Error ? caught.message : t('publications.commentError')
   }
+}
+
+function insertEmoji(emoji: string): void {
+  commentBody.value += emoji
+}
+
+function selectSticker(sticker: string): void {
+  selectedCommentMedia.value = { kind: 'sticker', value: sticker }
+  mediaPicker.value = null
+}
+
+function attachGif(): void {
+  const value = gifUrl.value.trim()
+  if (!/^https?:\/\//i.test(value)) {
+    error.value = t('publications.gifUrlInvalid')
+    return
+  }
+  selectedCommentMedia.value = { kind: 'gif', value }
+  mediaPicker.value = null
 }
 
 async function submitReport(): Promise<void> {
@@ -310,18 +343,97 @@ watch(
           </p>
           <textarea
             v-model.trim="commentBody"
-            required
-            minlength="1"
             maxlength="5000"
             :placeholder="t('publications.commentPlaceholder')"
           />
+          <div class="comment-media-toolbar">
+            <button
+              type="button"
+              :class="{ active: mediaPicker === 'emoji' }"
+              @click="mediaPicker = mediaPicker === 'emoji' ? null : 'emoji'"
+            >
+              ☺ <span>{{ t('publications.emoji') }}</span>
+            </button>
+            <button
+              type="button"
+              :class="{ active: mediaPicker === 'sticker' }"
+              @click="mediaPicker = mediaPicker === 'sticker' ? null : 'sticker'"
+            >
+              ◇ <span>{{ t('publications.stickers') }}</span>
+            </button>
+            <button
+              type="button"
+              :class="{ active: mediaPicker === 'gif' }"
+              @click="mediaPicker = mediaPicker === 'gif' ? null : 'gif'"
+            >
+              GIF
+            </button>
+          </div>
+          <div v-if="mediaPicker" class="comment-media-picker">
+            <div v-if="mediaPicker === 'emoji'" class="emoji-grid">
+              <button
+                v-for="emoji in emojis"
+                :key="emoji"
+                type="button"
+                @click="insertEmoji(emoji)"
+              >
+                {{ emoji }}
+              </button>
+            </div>
+            <div v-else-if="mediaPicker === 'sticker'" class="sticker-grid">
+              <button
+                v-for="sticker in stickers"
+                :key="sticker"
+                type="button"
+                @click="selectSticker(sticker)"
+              >
+                {{ sticker }}
+              </button>
+            </div>
+            <div v-else class="gif-picker">
+              <input
+                v-model.trim="gifUrl"
+                type="url"
+                :placeholder="t('publications.gifUrlPlaceholder')"
+                @keydown.enter.prevent="attachGif"
+              />
+              <button class="button button-secondary" type="button" @click="attachGif">
+                {{ t('publications.attachGif') }}
+              </button>
+            </div>
+          </div>
+          <div v-if="selectedCommentMedia" class="selected-comment-media">
+            <img
+              v-if="selectedCommentMedia.kind === 'gif'"
+              :src="selectedCommentMedia.value"
+              alt=""
+            />
+            <span v-else>{{ selectedCommentMedia.value }}</span>
+            <button
+              type="button"
+              :aria-label="t('publications.removeMedia')"
+              @click="selectedCommentMedia = null"
+            >
+              ×
+            </button>
+          </div>
           <button class="button button-primary">{{ t('publications.send') }}</button>
         </form>
         <p v-if="!comments.length" class="empty-state">{{ t('publications.noComments') }}</p>
         <ol v-else class="comment-list">
           <li v-for="comment in topLevelComments" :key="comment.id">
             <small>{{ new Date(comment.created_at).toLocaleString(locale) }}</small>
-            <p>{{ comment.body }}</p>
+            <p v-if="comment.body">{{ comment.body }}</p>
+            <img
+              v-if="comment.media_kind === 'gif' && comment.media_value"
+              class="comment-gif"
+              :src="comment.media_value"
+              alt="GIF"
+              loading="lazy"
+            />
+            <div v-else-if="comment.media_kind === 'sticker'" class="comment-sticker">
+              {{ comment.media_value }}
+            </div>
             <button class="reply-button" type="button" @click="replyTo = comment.id">
               {{ t('publications.reply') }}
             </button>
@@ -335,7 +447,17 @@ watch(
             <ol v-if="repliesFor(comment.id).length" class="reply-list">
               <li v-for="reply in repliesFor(comment.id)" :key="reply.id">
                 <small>{{ new Date(reply.created_at).toLocaleString(locale) }}</small>
-                <p>{{ reply.body }}</p>
+                <p v-if="reply.body">{{ reply.body }}</p>
+                <img
+                  v-if="reply.media_kind === 'gif' && reply.media_value"
+                  class="comment-gif"
+                  :src="reply.media_value"
+                  alt="GIF"
+                  loading="lazy"
+                />
+                <div v-else-if="reply.media_kind === 'sticker'" class="comment-sticker">
+                  {{ reply.media_value }}
+                </div>
                 <button
                   class="report-button"
                   type="button"
