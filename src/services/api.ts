@@ -688,7 +688,11 @@ export function saveJournalIssue(
   id: string,
   payload: Pick<JournalIssue, 'title' | 'period_start' | 'period_end' | 'pages'>,
 ): Promise<JournalIssue> {
-  return request(`/journal/issues/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
+  return request(`/journal/issues/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  })
 }
 export function getJournalMaterials(id: string, locale: string): Promise<JournalCandidate[]> {
   return request(`/journal/issues/${id}/materials?locale=${locale}`)
