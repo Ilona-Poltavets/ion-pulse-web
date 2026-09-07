@@ -104,6 +104,7 @@ export const messages = {
       reportReason: 'Опишите причину',
       subscriptionError: 'Не удалось обновить подписку',
       reportError: 'Не удалось отправить жалобу',
+      actionErrorTitle: 'Не удалось выполнить действие',
     },
     footer: {
       tagline: 'One story. Two audiences.',
@@ -526,6 +527,7 @@ export const messages = {
       reportReason: 'Describe the reason',
       subscriptionError: 'Could not update subscription',
       reportError: 'Could not send report',
+      actionErrorTitle: 'Could not complete the action',
     },
     footer: {
       tagline: 'One story. Two audiences.',

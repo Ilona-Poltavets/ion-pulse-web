@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ContentBody from '@/components/content/ContentBody.vue'
+import PreviewModal from '@/components/content/PreviewModal.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -220,7 +221,7 @@ watch(
 <template>
   <section class="publication-page">
     <p v-if="loading" class="empty-state">{{ t('publications.loading') }}</p>
-    <p v-else-if="error" class="form-error">{{ error }}</p>
+    <p v-else-if="error && !publication" class="form-error">{{ error }}</p>
     <article v-else-if="publication" class="publication-article">
       <RouterLink class="back-link" to="/">{{ t('publications.back') }}</RouterLink>
       <div class="publication-card-meta">
@@ -364,5 +365,52 @@ watch(
         </div>
       </form>
     </article>
+    <PreviewModal
+      :model-value="Boolean(error && publication)"
+      :title="t('publications.actionErrorTitle')"
+      @update:model-value="
+        (value) => {
+          if (!value) error = ''
+        }
+      "
+    >
+      <div class="publication-error-modal" role="alert">
+        <span aria-hidden="true">!</span>
+        <h2>{{ t('publications.actionErrorTitle') }}</h2>
+        <p>{{ error }}</p>
+      </div>
+    </PreviewModal>
   </section>
 </template>
+
+<style scoped>
+.publication-error-modal {
+  width: min(100%, 520px);
+  margin: auto;
+  padding: clamp(24px, 5vw, 48px);
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid rgb(255 123 123 / 35%);
+  border-radius: 12px;
+}
+.publication-error-modal > span {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  margin: 0 auto 18px;
+  color: #ff9292;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-weight: 700;
+}
+.publication-error-modal h2 {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+}
+.publication-error-modal p {
+  margin: 0;
+  color: #ff9292;
+  overflow-wrap: anywhere;
+}
+</style>
