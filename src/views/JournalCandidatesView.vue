@@ -2,7 +2,6 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
-import BlockEditor from '@/components/content/BlockEditor.vue'
 import MagazinePage from '@/components/journal/MagazinePage.vue'
 import {
   createJournalIssue,
@@ -35,6 +34,7 @@ const message = ref('')
 const saved = ref('')
 const published = ref(false)
 const templates: { id: JournalPage['template']; name: string; description: string }[] = [
+  { id: 'cover', name: 'Обложка', description: 'Фоновая картинка и свободный текст' },
   { id: 'feature', name: 'Большой материал', description: 'Крупный заголовок и текст с буквицей' },
   { id: 'columns', name: 'Классические колонки', description: 'Две колонки журнального текста' },
   { id: 'interview', name: 'Интервью', description: 'Акцентная цитата и разговор' },
@@ -84,8 +84,64 @@ function add(template: JournalPage['template']) {
     text: '',
     image_url: '',
     accent: '#c5ef58',
+    image_width: 100,
+    image_height: template === 'cover' ? 100 : 38,
+    image_position: template === 'cover' ? 'background' : 'full',
+    text_x: 8,
+    text_y: template === 'cover' ? 58 : 8,
+    text_width: 84,
+    text_size: template === 'cover' ? 54 : 38,
+    continuation: false,
   })
   active.value = pages.value.length - 1
+}
+function normalizePage(value: JournalPage): JournalPage {
+  return {
+    ...value,
+    image_width: value.image_width ?? 100,
+    image_height: value.image_height ?? (value.template === 'cover' ? 100 : 38),
+    image_position: value.image_position ?? (value.template === 'cover' ? 'background' : 'full'),
+    text_x: value.text_x ?? 8,
+    text_y: value.text_y ?? (value.template === 'cover' ? 58 : 8),
+    text_width: value.text_width ?? 84,
+    text_size: value.text_size ?? (value.template === 'cover' ? 54 : 38),
+    continuation: value.continuation ?? false,
+  }
+}
+
+function splitText(value: string, limit: number): string[] {
+  const words = value.trim().split(/\s+/)
+  const chunks: string[] = []
+  let chunk = ''
+  for (const word of words) {
+    if (chunk && `${chunk} ${word}`.length > limit) {
+      chunks.push(chunk)
+      chunk = word
+    } else chunk = chunk ? `${chunk} ${word}` : word
+  }
+  if (chunk) chunks.push(chunk)
+  return chunks
+}
+
+function paginateText() {
+  if (!page.value || page.value.template === 'cover') return
+  const current = page.value
+  const limit = current.template === 'columns' ? 2600 : current.image_url ? 1200 : 1800
+  const chunks = splitText(current.text, limit)
+  if (chunks.length < 2) return
+  current.text = chunks.shift() || ''
+  const continuationPages = chunks.map((text, index) =>
+    normalizePage({
+      ...current,
+      heading: `${current.heading || 'Продолжение'}${index ? ` · ${index + 2}` : ' · продолжение'}`,
+      text,
+      image_url: '',
+      image_position: 'full',
+      continuation: true,
+    }),
+  )
+  pages.value.splice(active.value + 1, 0, ...continuationPages)
+  message.value = `Текст перенесён на ${continuationPages.length} стр. продолжения.`
 }
 function move(delta: number) {
   const target = active.value + delta
@@ -102,7 +158,7 @@ function openDraft(draft: JournalIssue) {
   issueId.value = draft.id
   title.value = draft.title
   month.value = draft.period_start.slice(0, 7)
-  pages.value = JSON.parse(JSON.stringify(draft.pages))
+  pages.value = (JSON.parse(JSON.stringify(draft.pages)) as JournalPage[]).map(normalizePage)
   active.value = 0
   saved.value = fingerprint.value
   published.value = false
@@ -113,9 +169,10 @@ async function save() {
   if (
     title.value.length < 5 ||
     !pages.value.length ||
-    pages.value.some((p) => !p.publication_ids.length)
+    !pages.value.some((p) => p.publication_ids.length) ||
+    pages.value.some((p) => p.template !== 'cover' && !p.publication_ids.length)
   ) {
-    error.value = 'Укажите название и добавьте материал на каждую страницу.'
+    error.value = 'Укажите название и добавьте материал на каждую внутреннюю страницу.'
     return
   }
   busy.value = true
@@ -228,56 +285,122 @@ async function publish() {
               <label
                 >Изображение (URL)<input v-model="page.image_url" placeholder="https://…"
               /></label>
-              <label>Акцент<input v-model="page.accent" type="color" /></label>
-              <a href="#journal-content-editor">Редактировать текст блоками ↓</a>
-              <h3>Материалы месяца</h3>
-              <input v-model="search" aria-label="Поиск новостей" placeholder="Поиск по названию" />
-              <select v-model="sort" aria-label="Сортировка">
-                <option value="score">Популярность</option>
-                <option value="published_at">Сначала новые</option>
-                <option value="view_count">Просмотры</option>
-                <option value="comment_count">Комментарии</option>
-              </select>
-              <p v-if="!sorted.length">За этот месяц новостей нет.</p>
-              <label v-for="item in sorted" :key="item.id" class="magazine-candidate"
-                ><input
-                  v-model="page.publication_ids"
-                  type="checkbox"
-                  :value="item.id"
-                  :disabled="
-                    page.publication_ids.length >= 4 && !page.publication_ids.includes(item.id)
-                  "
-                /><span
-                  >{{ item.title
-                  }}<small
-                    >{{ new Date(item.published_at).toLocaleDateString() }} · ◉
-                    {{ item.view_count }} · ◇ {{ item.comment_count }}</small
-                  ></span
-                ></label
+              <label
+                >Расположение изображения<select v-model="page.image_position">
+                  <option value="full">На всю ширину</option>
+                  <option value="left">Слева, текст обтекает</option>
+                  <option value="right">Справа, текст обтекает</option>
+                  <option value="background">Фон страницы</option>
+                </select></label
               >
+              <label
+                >Ширина изображения · {{ page.image_width }}%<input
+                  v-model.number="page.image_width"
+                  type="range"
+                  min="20"
+                  max="100"
+              /></label>
+              <label
+                >Высота изображения · {{ page.image_height }}%<input
+                  v-model.number="page.image_height"
+                  type="range"
+                  min="15"
+                  max="100"
+              /></label>
+              <label>Акцент<input v-model="page.accent" type="color" /></label>
+              <template v-if="page.template === 'cover'">
+                <label
+                  >Текст обложки<textarea v-model="page.text" rows="5" maxlength="20000" />
+                </label>
+                <label
+                  >Позиция текста по горизонтали · {{ page.text_x }}%<input
+                    v-model.number="page.text_x"
+                    type="range"
+                    min="0"
+                    max="80"
+                /></label>
+                <label
+                  >Позиция текста по вертикали · {{ page.text_y }}%<input
+                    v-model.number="page.text_y"
+                    type="range"
+                    min="0"
+                    max="85"
+                /></label>
+                <label
+                  >Ширина текста · {{ page.text_width }}%<input
+                    v-model.number="page.text_width"
+                    type="range"
+                    min="20"
+                    max="100"
+                /></label>
+                <label
+                  >Размер текста · {{ page.text_size }} px<input
+                    v-model.number="page.text_size"
+                    type="range"
+                    min="12"
+                    max="96"
+                /></label>
+              </template>
+              <label v-else
+                >Редакторский текст<textarea
+                  v-model="page.text"
+                  rows="10"
+                  maxlength="20000"
+                  @blur="paginateText"
+                />
+              </label>
+              <h3 v-if="page.template !== 'cover'">Материалы месяца</h3>
+              <template v-if="page.template !== 'cover'">
+                <input
+                  v-model="search"
+                  aria-label="Поиск новостей"
+                  placeholder="Поиск по названию"
+                />
+                <select v-model="sort" aria-label="Сортировка">
+                  <option value="score">Популярность</option>
+                  <option value="published_at">Сначала новые</option>
+                  <option value="view_count">Просмотры</option>
+                  <option value="comment_count">Комментарии</option>
+                </select>
+                <p v-if="!sorted.length">За этот месяц новостей нет.</p>
+                <label v-for="item in sorted" :key="item.id" class="magazine-candidate"
+                  ><input
+                    v-model="page.publication_ids"
+                    type="checkbox"
+                    :value="item.id"
+                    :disabled="
+                      page.publication_ids.length >= 4 && !page.publication_ids.includes(item.id)
+                    "
+                  /><span
+                    >{{ item.title
+                    }}<small
+                      >{{ new Date(item.published_at).toLocaleDateString() }} · ◉
+                      {{ item.view_count }} · ◇ {{ item.comment_count }}</small
+                    ></span
+                  ></label
+                >
+              </template>
             </template>
           </aside>
           <div class="magazine-preview">
-            <MagazinePage v-if="page" :page="page" :materials="candidates" :number="active + 1" />
+            <MagazinePage
+              v-if="page"
+              :page="page"
+              :materials="candidates"
+              :number="active + 1"
+              editable
+              @text-position="
+                ({ x, y }) => {
+                  page!.text_x = x
+                  page!.text_y = y
+                }
+              "
+            />
             <p v-else class="empty-state">
               Выберите один из пяти шаблонов, чтобы добавить первую страницу.
             </p>
           </div>
         </div>
-        <section v-if="page" id="journal-content-editor" class="journal-content-editor">
-          <h2>Содержание страницы {{ active + 1 }}</h2>
-          <p>
-            Пустой редактор использует исходный текст новости. Для нескольких материалов
-            редакторский текст добавляется после них.
-          </p>
-          <BlockEditor
-            :key="active"
-            v-model="page.text"
-            :disabled="busy || published"
-            :max-length="20000"
-            label="Редакторский текст"
-          />
-        </section>
       </fieldset>
     </template>
   </section>

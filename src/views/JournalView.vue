@@ -37,6 +37,14 @@ const pages = computed<JournalPage[]>(() =>
         text: '',
         image_url: '',
         accent: '#c5ef58',
+        image_width: 100,
+        image_height: 38,
+        image_position: 'full',
+        text_x: 8,
+        text_y: 58,
+        text_width: 84,
+        text_size: 38,
+        continuation: false,
       })),
 )
 const ranked = computed(() => [...materials.value].sort((a, b) => b.score - a.score))

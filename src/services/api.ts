@@ -103,12 +103,20 @@ export interface JournalCandidate extends DigestItem {
   score: number
 }
 export interface JournalPage {
-  template: 'feature' | 'columns' | 'interview' | 'briefs' | 'poster'
+  template: 'cover' | 'feature' | 'columns' | 'interview' | 'briefs' | 'poster'
   publication_ids: string[]
   heading: string
   text: string
   image_url: string
   accent: string
+  image_width: number
+  image_height: number
+  image_position: 'full' | 'left' | 'right' | 'background'
+  text_x: number
+  text_y: number
+  text_width: number
+  text_size: number
+  continuation: boolean
 }
 export interface JournalIssue {
   pages: JournalPage[]
