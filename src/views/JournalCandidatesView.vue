@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import BlockEditor from '@/components/content/BlockEditor.vue'
 import MagazinePage from '@/components/journal/MagazinePage.vue'
 import {
   createJournalIssue,
@@ -228,14 +229,7 @@ async function publish() {
                 >Изображение (URL)<input v-model="page.image_url" placeholder="https://…"
               /></label>
               <label>Акцент<input v-model="page.accent" type="color" /></label>
-              <label
-                >Редакторский текст<textarea
-                  v-model="page.text"
-                  rows="6"
-                  maxlength="20000"
-                  placeholder="Оставьте пустым, чтобы использовать текст новости"
-                />
-              </label>
+              <a href="#journal-content-editor">Редактировать текст блоками ↓</a>
               <h3>Материалы месяца</h3>
               <input v-model="search" aria-label="Поиск новостей" placeholder="Поиск по названию" />
               <select v-model="sort" aria-label="Сортировка">
@@ -270,6 +264,20 @@ async function publish() {
             </p>
           </div>
         </div>
+        <section v-if="page" id="journal-content-editor" class="journal-content-editor">
+          <h2>Содержание страницы {{ active + 1 }}</h2>
+          <p>
+            Пустой редактор использует исходный текст новости. Для нескольких материалов
+            редакторский текст добавляется после них.
+          </p>
+          <BlockEditor
+            :key="active"
+            v-model="page.text"
+            :disabled="busy || published"
+            :max-length="20000"
+            label="Редакторский текст"
+          />
+        </section>
       </fieldset>
     </template>
   </section>
@@ -375,5 +383,16 @@ async function publish() {
   .magazine-workspace aside {
     max-height: none;
   }
+}
+</style>
+
+<style scoped>
+.journal-content-editor {
+  margin-top: 36px;
+  scroll-margin-top: 24px;
+}
+.journal-content-editor > p {
+  margin-bottom: 20px;
+  color: #899082;
 }
 </style>

@@ -3,6 +3,10 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
+import BlockEditor from '@/components/content/BlockEditor.vue'
+import ContentBody from '@/components/content/ContentBody.vue'
+import PreviewModal from '@/components/content/PreviewModal.vue'
+import { contentText } from '@/components/content/contentFormat'
 import {
   createDraft,
   listCategories,
@@ -40,6 +44,8 @@ const revisions = ref<PublicationRevision[]>([])
 const isReadyForAutosave = ref(false)
 const skipNextAutosave = ref(false)
 const isPreviewVisible = ref(false)
+const isSaving = ref(false)
+const validationErrors = ref<Record<string, string>>({})
 const categories = ref<Category[]>([])
 const games = ref<Game[]>([])
 const digestCandidates = ref<FeedPublication[]>([])
@@ -47,7 +53,9 @@ const selectedDigestItemIds = ref<string[]>([])
 let autosaveTimer: ReturnType<typeof setTimeout> | undefined
 
 const wordCount = computed(() =>
-  draft.value.body.trim() ? draft.value.body.trim().split(/\s+/).length : 0,
+  contentText(draft.value.body).trim()
+    ? contentText(draft.value.body).trim().split(/\s+/).length
+    : 0,
 )
 const canCreateDigest = computed(() =>
   auth.user?.roles.some((role) => ['editor', 'moderator', 'administrator'].includes(role)),
@@ -141,7 +149,38 @@ async function save(): Promise<void> {
 }
 
 async function saveDraft(returnToProfile: boolean): Promise<void> {
+  if (isSaving.value) {
+    if (!returnToProfile) {
+      if (autosaveTimer) clearTimeout(autosaveTimer)
+      autosaveTimer = setTimeout(() => void saveDraft(false), 900)
+    }
+    return
+  }
   if (autosaveTimer) clearTimeout(autosaveTimer)
+  validationErrors.value = {}
+  const titleLength = draft.value.title.trim().length
+  const summaryLength = draft.value.summary.trim().length
+  const bodyLength = contentText(draft.value.body).trim().length
+  if (titleLength < 5)
+    validationErrors.value.title = 'Заголовок должен содержать минимум 5 символов.'
+  else if (titleLength > 240)
+    validationErrors.value.title = 'Заголовок не может быть длиннее 240 символов.'
+  if (summaryLength < 20)
+    validationErrors.value.summary = 'Анонс должен содержать минимум 20 символов.'
+  else if (summaryLength > 500)
+    validationErrors.value.summary = 'Анонс не может быть длиннее 500 символов.'
+  if (bodyLength < 50)
+    validationErrors.value.body = 'Добавьте минимум 50 символов текста материала.'
+  if (Object.keys(validationErrors.value).length) {
+    message.value = 'Проверьте выделенные поля.'
+    if (returnToProfile) {
+      requestAnimationFrame(() =>
+        document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(),
+      )
+    }
+    return
+  }
+  isSaving.value = true
   try {
     if (draftId) {
       await updateDraft(draftId, {
@@ -170,15 +209,40 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
     else message.value = t('editor.autoSaved')
   } catch (error) {
     message.value = error instanceof Error ? error.message : t('editor.saveError')
+    if (error instanceof Error) {
+      const field = ['title', 'summary', 'body'].find((name) =>
+        error.message.toLowerCase().startsWith(`${name}:`),
+      )
+      if (field) validationErrors.value[field] = error.message.split(':').slice(1).join(':').trim()
+    }
+  } finally {
+    isSaving.value = false
   }
 }
 </script>
 <template>
   <section class="editor-page">
     <header class="editor-header">
-      <div>
+      <div class="editor-heading">
         <p class="eyebrow">{{ draftId ? t('editor.editEyebrow') : t('editor.newEyebrow') }}</p>
-        <h1>{{ draftId ? t('editor.editTitle') : t('editor.newTitle') }}</h1>
+        <h1 class="editor-inline-title">
+          <span aria-hidden="true">{{ draft.title || t('editor.headlinePlaceholder') }} </span>
+          <textarea
+            v-model.trim="draft.title"
+            form="publication-editor-form"
+            :aria-label="t('editor.headline')"
+            :placeholder="t('editor.headlinePlaceholder')"
+            required
+            minlength="5"
+            maxlength="240"
+            rows="1"
+            :aria-invalid="Boolean(validationErrors.title)"
+            @keydown.enter.prevent
+          />
+        </h1>
+        <small v-if="validationErrors.title" class="editor-field-error" role="alert">{{
+          validationErrors.title
+        }}</small>
       </div>
       <div class="editor-status">
         <span></span
@@ -186,7 +250,7 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
       </div>
     </header>
     <div class="editor-layout">
-      <form class="editor-form" @submit.prevent="save">
+      <form id="publication-editor-form" class="editor-form" @submit.prevent="save">
         <div class="editor-meta-fields">
           <label
             >{{ t('editor.category')
@@ -244,45 +308,53 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
               >
             </label>
           </fieldset>
+          <div class="editor-sidebar-actions">
+            <button type="button" class="button button-secondary" @click="isPreviewVisible = true">
+              {{ t('editor.preview') }}
+            </button>
+            <button type="submit" class="button button-primary" :disabled="isSaving">
+              {{ t('editor.saveAndExit') }}
+            </button>
+            <p v-if="message" role="status">{{ message }}</p>
+          </div>
         </div>
-        <label class="editor-title-field"
-          >{{ t('editor.headline')
-          }}<input
-            v-model.trim="draft.title"
-            required
-            minlength="5"
-            :placeholder="t('editor.headlinePlaceholder')"
-        /></label>
         <label
           >{{ t('editor.summary')
           }}<textarea
             v-model.trim="draft.summary"
             required
             minlength="20"
+            maxlength="500"
+            :aria-invalid="Boolean(validationErrors.summary)"
             :placeholder="t('editor.summaryPlaceholder')"
           />
+          <span class="editor-field-meta"
+            ><small v-if="validationErrors.summary" class="editor-field-error" role="alert">{{
+              validationErrors.summary
+            }}</small
+            ><small>{{ draft.summary.length }}/500</small></span
+          >
         </label>
-        <label class="editor-body-field"
-          >{{ t('editor.body')
-          }}<textarea
-            v-model.trim="draft.body"
-            required
-            minlength="50"
-            :placeholder="t('editor.bodyPlaceholder')"
-          />
-        </label>
+        <BlockEditor
+          v-model="draft.body"
+          :label="t('editor.body')"
+          external-preview
+          @preview="isPreviewVisible = true"
+        />
+        <small
+          v-if="validationErrors.body"
+          class="editor-field-error editor-body-error"
+          role="alert"
+          >{{ validationErrors.body }}</small
+        >
         <div class="editor-footer">
           <small>{{ t('editor.wordCount', { count: wordCount }) }}</small>
           <div class="editor-actions">
-            <button
-              class="button button-secondary"
-              type="button"
-              @click="isPreviewVisible = !isPreviewVisible"
-            >
-              {{ isPreviewVisible ? t('editor.hidePreview') : t('editor.preview') }}
+            <button class="button button-secondary" type="button" @click="isPreviewVisible = true">
+              {{ t('editor.preview') }}
             </button>
-            <button class="button button-primary">
-              {{ draftId ? t('editor.saveAndExit') : t('editor.createDraft') }}
+            <button class="button button-primary" :disabled="isSaving">
+              {{ t('editor.saveAndExit') }}
             </button>
           </div>
         </div>
@@ -311,20 +383,176 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
         </ol>
       </aside>
     </div>
-    <section v-if="isPreviewVisible" class="draft-preview" aria-labelledby="preview-title">
-      <div class="preview-heading">
-        <p class="eyebrow">{{ t('editor.previewEyebrow') }}</p>
-        <button class="account-link" type="button" @click="isPreviewVisible = false">
-          {{ t('editor.close') }}
-        </button>
-      </div>
-      <p class="publication-card-meta">
-        <span>{{ draft.category_slug }}</span
-        ><span>{{ draft.source_locale.toUpperCase() }}</span>
-      </p>
-      <h1 id="preview-title">{{ draft.title || t('editor.previewHeadline') }}</h1>
-      <p class="publication-summary">{{ draft.summary || t('editor.previewSummary') }}</p>
-      <div class="publication-body">{{ draft.body || t('editor.previewBody') }}</div>
-    </section>
+    <PreviewModal v-model="isPreviewVisible" :title="t('editor.preview')">
+      <article class="editor-article-preview">
+        <p class="publication-card-meta">
+          <span>{{ draft.category_slug }}</span
+          ><span>{{ draft.source_locale.toUpperCase() }}</span>
+        </p>
+        <h1 id="preview-title">{{ draft.title || t('editor.previewHeadline') }}</h1>
+        <p class="publication-summary">{{ draft.summary || t('editor.previewSummary') }}</p>
+        <ContentBody class="publication-body" :body="draft.body || t('editor.previewBody')" />
+      </article>
+    </PreviewModal>
   </section>
 </template>
+
+<style scoped>
+.editor-heading {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+}
+.editor-field-error {
+  display: block;
+  margin-top: 10px;
+  color: #ff7b7b;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.editor-field-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.editor-field-meta .editor-field-error {
+  margin: 0;
+}
+.editor-body-error {
+  grid-column: 1;
+  grid-row: 3;
+  margin-top: -14px;
+}
+.editor-header .editor-inline-title {
+  display: grid;
+  width: 100%;
+  max-width: none;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.12;
+}
+.editor-inline-title > span,
+.editor-inline-title > textarea {
+  grid-area: 1 / 1;
+  padding: 4px 0;
+  border: 0;
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.editor-inline-title > span {
+  visibility: hidden;
+  pointer-events: none;
+}
+.editor-inline-title > textarea {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  color: var(--text);
+  border-radius: 3px;
+}
+.editor-inline-title > textarea::placeholder {
+  color: var(--muted);
+}
+.editor-inline-title > textarea:focus-visible {
+  outline: 1px solid var(--lime);
+  outline-offset: 5px;
+}
+
+.editor-layout {
+  display: block;
+}
+.editor-form {
+  grid-template-columns: minmax(0, 1fr) 250px;
+  align-items: start;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.editor-meta-fields {
+  position: sticky;
+  top: calc(var(--header-height, 78px) + 16px);
+  align-self: start;
+  max-height: calc(100dvh - var(--header-height, 78px) - 32px);
+  overflow-y: auto;
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  gap: 20px;
+}
+.editor-form > label {
+  grid-column: 1;
+  grid-row: 1;
+}
+.editor-form > .block-editor {
+  grid-column: 1;
+  grid-row: 2;
+}
+.editor-footer {
+  grid-column: 1;
+  grid-row: 4;
+}
+.editor-revisions {
+  margin-top: 24px;
+}
+@media (max-width: 900px) {
+  .editor-form {
+    grid-template-columns: 1fr;
+  }
+  .editor-meta-fields {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .editor-form > label,
+  .editor-form > .block-editor,
+  .editor-footer {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+.editor-sidebar-actions {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-top: 4px;
+}
+.editor-sidebar-actions .button {
+  width: 100%;
+  font-size: 12px;
+  padding: 12px 10px;
+}
+.editor-sidebar-actions p {
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.editor-article-preview h1 {
+  max-width: none;
+  font-size: clamp(28px, 4vw, 48px);
+  line-height: 1.15;
+  color: #20282d;
+  overflow-wrap: anywhere;
+}
+.editor-article-preview .publication-summary {
+  color: #57645c;
+}
+.editor-article-preview .publication-card-meta {
+  color: #687760;
+}
+</style>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ContentBody from '@/components/content/ContentBody.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -230,17 +231,16 @@ watch(
       <div class="publication-author">
         <span>{{ t('publications.author', { name: publication.author_name }) }}</span>
         <button
-          v-if="canManageAuthorSubscription"
-          class="button button-secondary"
+          v-if="canManageAuthorSubscription && !isSubscribedToAuthor"
+          class="author-subscribe-action"
           type="button"
           @click="toggleAuthorSubscription"
         >
-          {{
-            isSubscribedToAuthor
-              ? t('publications.unsubscribeAuthor')
-              : t('publications.subscribeAuthor')
-          }}
+          {{ t('publications.subscribeAuthor') }}
         </button>
+        <span v-else-if="canManageAuthorSubscription" class="author-subscribed-label">{{
+          t('publications.subscribedAuthor')
+        }}</span>
       </div>
       <p v-if="reviewGame || publication.review_score !== null" class="publication-review-meta">
         <span v-if="reviewGame">{{ t('publications.game', { title: reviewGame.title }) }}</span>
@@ -253,7 +253,7 @@ watch(
       <p v-if="!publication.translation_available" class="translation-notice">
         {{ t('publications.translationFallback', { locale: publication.locale.toUpperCase() }) }}
       </p>
-      <div class="publication-body">{{ publication.body }}</div>
+      <ContentBody class="publication-body" :body="publication.body" />
       <section
         v-if="digestItems.length"
         class="digest-items"

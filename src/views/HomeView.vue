@@ -26,6 +26,7 @@ const selectedCategory = ref('all')
 const categories = ref<Category[]>([])
 const searchQuery = ref('')
 const pageSize = 12
+let feedRequestId = 0
 
 const statusLabel = computed(() => {
   if (requestStatus.value === 'success') return t('status.online')
@@ -49,6 +50,7 @@ watch(locale, () => {
 })
 
 async function loadFeed(reset = true): Promise<void> {
+  const requestId = ++feedRequestId
   try {
     if (reset) isFeedLoading.value = true
     else isLoadingMore.value = true
@@ -60,13 +62,17 @@ async function loadFeed(reset = true): Promise<void> {
       limit: pageSize,
       offset,
     })
+    if (requestId !== feedRequestId) return
     publications.value = reset ? next : [...publications.value, ...next]
     hasMore.value = next.length === pageSize
   } catch (error) {
+    if (requestId !== feedRequestId) return
     feedError.value = error instanceof Error ? error.message : t('publications.feedError')
   } finally {
-    isFeedLoading.value = false
-    isLoadingMore.value = false
+    if (requestId === feedRequestId) {
+      isFeedLoading.value = false
+      isLoadingMore.value = false
+    }
   }
 }
 
@@ -81,6 +87,12 @@ function selectCategoryFromTile(slug: string): void {
 }
 
 function submitSearch(): void {
+  void loadFeed(true)
+}
+
+function clearSearch(): void {
+  if (!searchQuery.value) return
+  searchQuery.value = ''
   void loadFeed(true)
 }
 
@@ -129,9 +141,28 @@ async function loadCategories(): Promise<void> {
       </button>
     </div>
     <form class="feed-search" role="search" @submit.prevent="submitSearch">
-      <label for="feed-search">{{ t('publications.searchLabel') }}</label>
-      <input id="feed-search" v-model.trim="searchQuery" maxlength="120" />
-      <button class="button button-secondary">{{ t('publications.searchAction') }}</button>
+      <label class="feed-search-control" for="feed-search">
+        <span class="feed-search-icon" aria-hidden="true">⌕</span>
+        <span class="sr-only">{{ t('publications.searchLabel') }}</span>
+        <input
+          id="feed-search"
+          v-model="searchQuery"
+          maxlength="120"
+          :placeholder="t('publications.searchLabel')"
+        />
+        <button
+          v-if="searchQuery"
+          class="feed-search-clear"
+          type="button"
+          aria-label="Очистить поиск"
+          @click="clearSearch"
+        >
+          ×
+        </button>
+      </label>
+      <button class="feed-search-submit" :disabled="isFeedLoading">
+        {{ t('publications.searchAction') }} <span aria-hidden="true">→</span>
+      </button>
     </form>
 
     <p v-if="feedError" class="form-error">{{ feedError }}</p>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ContentBody from '@/components/content/ContentBody.vue'
 import { computed } from 'vue'
 import type { JournalCandidate, JournalPage } from '@/services/api'
 const props = defineProps<{ page: JournalPage; materials: JournalCandidate[]; number: number }>()
@@ -23,13 +24,14 @@ const stories = computed(() =>
           <small>{{ story.category_slug }}</small>
           <h2 v-if="!page.heading || stories.length > 1">{{ story.title }}</h2>
           <p class="magazine-deck">{{ story.summary }}</p>
-          <div class="magazine-copy">
-            {{ page.text && stories.length === 1 ? page.text : story.body }}
-          </div>
+          <ContentBody
+            class="magazine-copy"
+            :body="page.text && stories.length === 1 ? page.text : story.body"
+          />
           <RouterLink :to="`/publications/${story.id}`">↗ {{ story.title }}</RouterLink>
         </section>
       </div>
-      <p v-if="page.text && stories.length > 1" class="magazine-copy">{{ page.text }}</p>
+      <ContentBody v-if="page.text && stories.length > 1" class="magazine-copy" :body="page.text" />
     </div>
     <footer class="magazine-running">
       <span>KEEP READING. STAY CURIOUS.</span><b>{{ String(number).padStart(2, '0') }}</b>
@@ -93,7 +95,7 @@ const stories = computed(() =>
 .magazine-copy {
   font-size: 14px;
   line-height: 1.65;
-  white-space: pre-wrap;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 .magazine-story a {

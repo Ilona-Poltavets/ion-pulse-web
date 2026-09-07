@@ -51,9 +51,6 @@ void auth.restore()
           <RouterLink to="/">{{ t('navigation.feed') }}</RouterLink>
           <RouterLink to="/#categories">{{ t('navigation.categories') }}</RouterLink>
           <RouterLink to="/journal">{{ t('navigation.journal') }}</RouterLink>
-          <RouterLink v-if="auth.isAuthenticated" to="/write">{{
-            t('navigation.write')
-          }}</RouterLink>
         </nav>
 
         <div class="header-actions">
@@ -63,9 +60,12 @@ void auth.restore()
           <RouterLink v-else class="account-link" to="/profile">{{
             auth.user?.display_name
           }}</RouterLink>
-          <details v-if="isStaff" class="workspace-menu">
+          <details v-if="auth.isAuthenticated" class="workspace-menu">
             <summary>{{ t('navigation.workspace') }}</summary>
             <div class="workspace-menu-panel">
+              <RouterLink to="/profile">{{ t('navigation.myPublications') }}</RouterLink>
+              <RouterLink to="/write">{{ t('navigation.write') }}</RouterLink>
+              <hr v-if="isStaff" />
               <RouterLink
                 v-if="
                   auth.user?.roles.includes('content_manager') ||

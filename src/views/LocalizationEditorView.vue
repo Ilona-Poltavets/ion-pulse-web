@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import BlockEditor from '@/components/content/BlockEditor.vue'
+import { contentText } from '@/components/content/contentFormat'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 import {
@@ -40,6 +42,10 @@ onMounted(async () => {
 
 async function save(): Promise<void> {
   if (!localization.value || !locale) return
+  if (contentText(localization.value.body).trim().length < 50) {
+    error.value = 'Добавьте минимум 50 символов текста материала.'
+    return
+  }
   try {
     isSaving.value = true
     localization.value = await updatePublicationLocalization(
@@ -86,10 +92,11 @@ async function save(): Promise<void> {
         >{{ t('localizationEditor.summary')
         }}<textarea v-model.trim="localization.summary" required minlength="20" />
       </label>
-      <label class="editor-body-field"
-        >{{ t('localizationEditor.body')
-        }}<textarea v-model.trim="localization.body" required minlength="50" />
-      </label>
+      <BlockEditor
+        v-model="localization.body"
+        :disabled="isSaving"
+        :label="t('localizationEditor.body')"
+      />
       <div class="editor-footer">
         <span>{{ message }}</span
         ><button class="button button-primary" :disabled="isSaving">

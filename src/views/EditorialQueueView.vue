@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import ContentBody from '@/components/content/ContentBody.vue'
+import PreviewModal from '@/components/content/PreviewModal.vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { decidePublication, listEditorialQueue, type Draft } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
@@ -12,8 +14,11 @@ const publications = ref<Draft[]>([])
 const notes = ref<Record<string, string>>({})
 const scheduledAt = ref<Record<string, string>>({})
 const message = ref('')
-const expandedId = ref<string | null>(null)
+const selectedId = ref<string | null>(null)
 const isSaving = ref(false)
+const selectedPublication = computed(() =>
+  publications.value.find((publication) => publication.id === selectedId.value),
+)
 
 onMounted(async () => {
   if (!auth.user) await auth.restore()
@@ -29,8 +34,15 @@ onMounted(async () => {
     publications.value = await listEditorialQueue()
   } catch (error) {
     message.value = error instanceof Error ? error.message : t('editorialQueue.loadError')
+  } finally {
+    isSaving.value = false
   }
 })
+
+function openReview(id: string): void {
+  message.value = ''
+  selectedId.value = id
+}
 
 async function decide(
   publication: Draft,
@@ -47,13 +59,15 @@ async function decide(
     return
   }
   try {
+    isSaving.value = true
+    message.value = ''
     await decidePublication(publication.id, {
       decision,
       note,
       scheduled_at: scheduledValue ? new Date(scheduledValue).toISOString() : undefined,
     })
     publications.value = publications.value.filter((item) => item.id !== publication.id)
-    expandedId.value = null
+    selectedId.value = null
   } catch (error) {
     message.value = error instanceof Error ? error.message : t('editorialQueue.saveError')
   } finally {
@@ -74,30 +88,41 @@ async function decide(
     <p v-if="message" class="dashboard-message">{{ message }}</p>
     <p v-if="!publications.length" class="empty-state">{{ t('editorialQueue.empty') }}</p>
     <div v-else class="queue-list">
-      <article
-        v-for="publication in publications"
-        :key="publication.id"
-        class="queue-card"
-        :class="{ expanded: expandedId === publication.id }"
-      >
-        <button
-          class="queue-summary"
-          type="button"
-          @click="expandedId = expandedId === publication.id ? null : publication.id"
-        >
+      <article v-for="publication in publications" :key="publication.id" class="queue-card">
+        <button class="queue-summary" type="button" @click="openReview(publication.id)">
           <div>
             <p class="eyebrow">{{ publication.category_slug }} · {{ publication.source_locale }}</p>
             <h2>{{ publication.title }}</h2>
             <p>{{ publication.summary }}</p>
           </div>
-          <span aria-hidden="true">{{ expandedId === publication.id ? '−' : '+' }}</span>
+          <span aria-hidden="true">→</span>
         </button>
-        <div v-if="expandedId === publication.id" class="queue-detail">
-          <div class="publication-body">{{ publication.body }}</div>
+      </article>
+    </div>
+    <PreviewModal
+      :model-value="Boolean(selectedPublication)"
+      :title="selectedPublication?.title || t('editorialQueue.title')"
+      @update:model-value="
+        (value) => {
+          if (!value) selectedId = null
+        }
+      "
+    >
+      <div v-if="selectedPublication" class="editorial-review-modal">
+        <div class="editorial-review-copy">
+          <p class="eyebrow">
+            {{ selectedPublication.category_slug }} · {{ selectedPublication.source_locale }}
+          </p>
+          <h1>{{ selectedPublication.title }}</h1>
+          <p class="publication-summary">{{ selectedPublication.summary }}</p>
+          <ContentBody class="publication-body" :body="selectedPublication.body" />
+        </div>
+        <aside class="editorial-review-controls">
+          <p v-if="message" class="form-error" role="alert">{{ message }}</p>
           <label
             >{{ t('editorialQueue.note')
             }}<textarea
-              v-model="notes[publication.id]"
+              v-model="notes[selectedPublication.id]"
               :placeholder="t('editorialQueue.notePlaceholder')"
               required
             />
@@ -106,21 +131,21 @@ async function decide(
             <button
               class="button button-primary"
               :disabled="isSaving"
-              @click="decide(publication, 'publish')"
+              @click="decide(selectedPublication, 'publish')"
             >
               {{ t('editorialQueue.publish') }}
             </button>
             <button
               class="button button-secondary"
               :disabled="isSaving"
-              @click="decide(publication, 'request_changes')"
+              @click="decide(selectedPublication, 'request_changes')"
             >
               {{ t('editorialQueue.requestChanges') }}
             </button>
             <button
               class="button button-secondary"
               :disabled="isSaving"
-              @click="decide(publication, 'reject')"
+              @click="decide(selectedPublication, 'reject')"
             >
               {{ t('editorialQueue.reject') }}
             </button>
@@ -128,18 +153,75 @@ async function decide(
           <div class="schedule-controls">
             <label
               >{{ t('editorialQueue.scheduleLabel')
-              }}<input v-model="scheduledAt[publication.id]" type="datetime-local"
+              }}<input v-model="scheduledAt[selectedPublication.id]" type="datetime-local"
             /></label>
             <button
               class="button button-secondary"
               :disabled="isSaving"
-              @click="decide(publication, 'schedule')"
+              @click="decide(selectedPublication, 'schedule')"
             >
               {{ t('editorialQueue.schedule') }}
             </button>
           </div>
-        </div>
-      </article>
-    </div>
+        </aside>
+      </div>
+    </PreviewModal>
   </section>
 </template>
+
+<style scoped>
+.editorial-review-modal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: clamp(24px, 4vw, 48px);
+}
+.editorial-review-copy h1 {
+  margin: 12px 0 20px;
+  color: #18231c;
+  font-size: clamp(30px, 4vw, 54px);
+  line-height: 1.08;
+}
+.editorial-review-controls {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+  color: var(--text);
+  background: var(--surface);
+  border-radius: 10px;
+}
+.editorial-review-controls label,
+.schedule-controls {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.editorial-review-controls textarea,
+.editorial-review-controls input {
+  width: 100%;
+  padding: 12px;
+  color: var(--text);
+  background: var(--background);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+}
+.editorial-review-controls textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+.editorial-review-controls .editor-actions {
+  display: grid;
+}
+@media (max-width: 800px) {
+  .editorial-review-modal {
+    grid-template-columns: 1fr;
+  }
+  .editorial-review-controls {
+    position: static;
+  }
+}
+</style>
