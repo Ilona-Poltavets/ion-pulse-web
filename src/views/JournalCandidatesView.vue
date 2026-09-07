@@ -33,16 +33,101 @@ const error = ref('')
 const message = ref('')
 const saved = ref('')
 const published = ref(false)
-const templates: { id: JournalPage['template']; name: string; description: string }[] = [
-  { id: 'cover', name: 'Обложка', description: 'Фоновая картинка и свободный текст' },
-  { id: 'feature', name: 'Большой материал', description: 'Крупный заголовок и текст с буквицей' },
-  { id: 'columns', name: 'Классические колонки', description: 'Две колонки журнального текста' },
-  { id: 'interview', name: 'Интервью', description: 'Акцентная цитата и разговор' },
-  { id: 'briefs', name: 'Коротко о главном', description: 'Сетка до четырёх новостей' },
-  { id: 'poster', name: 'Постер', description: 'Тёмная страница и яркая типографика' },
+const templates: Array<{
+  id: JournalPage['template']
+  name: string
+  description: string
+  defaults: Partial<JournalPage>
+}> = [
+  {
+    id: 'cover',
+    name: 'Обложка',
+    description: 'Главное фото, тема и анонсы',
+    defaults: { image_position: 'background', image_height: 100, text_y: 58, text_size: 54 },
+  },
+  {
+    id: 'title',
+    name: 'Титульная',
+    description: 'Название выпуска и выходные данные',
+    defaults: {
+      image_position: 'background',
+      image_height: 100,
+      text_x: 12,
+      text_y: 36,
+      text_width: 76,
+      text_size: 58,
+      heading: 'ION PULSE',
+      text: 'Ежемесячный журнал об играх и людях',
+    },
+  },
+  {
+    id: 'contents',
+    name: 'Содержание',
+    description: 'Материалы и номера страниц',
+    defaults: { image_position: 'right', image_width: 38, image_height: 28, heading: 'Содержание' },
+  },
+  {
+    id: 'feature',
+    name: 'Статья',
+    description: 'Вводный текст, колонки и фото',
+    defaults: { image_position: 'right', image_width: 38, image_height: 32 },
+  },
+  {
+    id: 'interview',
+    name: 'Интервью',
+    description: 'Фото героя, цитата и разговор',
+    defaults: { image_position: 'right', image_width: 44, image_height: 42 },
+  },
+  {
+    id: 'photo',
+    name: 'Фотостраница',
+    description: 'Большое изображение и подпись',
+    defaults: { image_position: 'full', image_width: 100, image_height: 62, text_size: 32 },
+  },
+  {
+    id: 'briefs',
+    name: 'Обзор / подборка',
+    description: 'Список с иллюстрациями',
+    defaults: { image_position: 'left', image_width: 30, image_height: 24 },
+  },
+  {
+    id: 'infographic',
+    name: 'Инфографика',
+    description: 'Факты, цифры и показатели',
+    defaults: { image_position: 'full', image_height: 34, heading: 'Главное в цифрах' },
+  },
+  {
+    id: 'columns',
+    name: 'Колонки',
+    description: 'Классический журнальный текст',
+    defaults: { image_position: 'full', image_height: 28 },
+  },
+  {
+    id: 'poster',
+    name: 'Постер',
+    description: 'Тёмная полоса и крупный текст',
+    defaults: { image_position: 'background', image_height: 100, text_size: 64 },
+  },
+  {
+    id: 'finale',
+    name: 'Финальная',
+    description: 'Послесловие и следующий номер',
+    defaults: {
+      image_position: 'background',
+      image_height: 100,
+      text_x: 10,
+      text_y: 18,
+      text_width: 80,
+      text_size: 48,
+      heading: 'Спасибо, что были с нами!',
+    },
+  },
 ]
 const fingerprint = computed(() => JSON.stringify([title.value, month.value, pages.value]))
 const dirty = computed(() => saved.value !== fingerprint.value)
+const standalonePage = computed(() =>
+  page.value ? ['cover', 'title', 'finale'].includes(page.value.template) : false,
+)
 const sorted = computed(() =>
   [...candidates.value]
     .filter((c) => c.title.toLowerCase().includes(search.value.toLowerCase()))
@@ -77,6 +162,7 @@ onMounted(async () => {
 })
 watch([month, locale], load)
 function add(template: JournalPage['template']) {
+  const preset = templates.find((item) => item.id === template)
   pages.value.push({
     template,
     publication_ids: [],
@@ -92,8 +178,19 @@ function add(template: JournalPage['template']) {
     text_width: 84,
     text_size: template === 'cover' ? 54 : 38,
     continuation: false,
+    ...preset?.defaults,
   })
   active.value = pages.value.length - 1
+}
+function materialLimit(template: JournalPage['template']): number {
+  if (template === 'contents') return 12
+  if (template === 'briefs' || template === 'infographic') return 8
+  return 4
+}
+function applyPreset(target: JournalPage): void {
+  const preset = templates.find((item) => item.id === target.template)
+  if (preset) Object.assign(target, preset.defaults)
+  if (['cover', 'title', 'finale'].includes(target.template)) target.publication_ids = []
 }
 function normalizePage(value: JournalPage): JournalPage {
   return {
@@ -170,7 +267,9 @@ async function save() {
     title.value.length < 5 ||
     !pages.value.length ||
     !pages.value.some((p) => p.publication_ids.length) ||
-    pages.value.some((p) => p.template !== 'cover' && !p.publication_ids.length)
+    pages.value.some(
+      (p) => !['cover', 'title', 'finale'].includes(p.template) && !p.publication_ids.length,
+    )
   ) {
     error.value = 'Укажите название и добавьте материал на каждую внутреннюю страницу.'
     return
@@ -249,8 +348,11 @@ async function publish() {
             {{ draft.title }}
           </button>
         </details>
-        <div class="magazine-template-picker">
+        <div class="magazine-template-picker" aria-label="Пресеты страниц">
           <button v-for="tpl in templates" :key="tpl.id" @click="add(tpl.id)">
+            <span class="preset-preview" :class="`preset-preview--${tpl.id}`" aria-hidden="true">
+              <i></i><i></i><i></i><i></i>
+            </span>
             <strong>＋ {{ tpl.name }}</strong
             ><small>{{ tpl.description }}</small>
           </button>
@@ -275,7 +377,7 @@ async function publish() {
                 ><button @click="remove">Удалить страницу</button>
               </div>
               <label
-                >Шаблон<select v-model="page.template">
+                >Шаблон<select v-model="page.template" @change="applyPreset(page)">
                   <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">
                     {{ tpl.name }}
                   </option>
@@ -308,7 +410,7 @@ async function publish() {
                   max="100"
               /></label>
               <label>Акцент<input v-model="page.accent" type="color" /></label>
-              <template v-if="page.template === 'cover'">
+              <template v-if="standalonePage">
                 <label
                   >Текст обложки<textarea v-model="page.text" rows="5" maxlength="20000" />
                 </label>
@@ -349,8 +451,8 @@ async function publish() {
                   @blur="paginateText"
                 />
               </label>
-              <h3 v-if="page.template !== 'cover'">Материалы месяца</h3>
-              <template v-if="page.template !== 'cover'">
+              <h3 v-if="!standalonePage">Материалы месяца</h3>
+              <template v-if="!standalonePage">
                 <input
                   v-model="search"
                   aria-label="Поиск новостей"
@@ -369,7 +471,8 @@ async function publish() {
                     type="checkbox"
                     :value="item.id"
                     :disabled="
-                      page.publication_ids.length >= 4 && !page.publication_ids.includes(item.id)
+                      page.publication_ids.length >= materialLimit(page.template) &&
+                      !page.publication_ids.includes(item.id)
                     "
                   /><span
                     >{{ item.title
@@ -396,9 +499,7 @@ async function publish() {
                 }
               "
             />
-            <p v-else class="empty-state">
-              Выберите один из пяти шаблонов, чтобы добавить первую страницу.
-            </p>
+            <p v-else class="empty-state">Выберите пресет, чтобы добавить первую страницу.</p>
           </div>
         </div>
       </fieldset>
@@ -434,24 +535,151 @@ async function publish() {
   color: inherit;
 }
 .magazine-template-picker {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 10px;
   margin: 24px 0;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
 }
 .magazine-template-picker button {
-  padding: 18px;
+  flex: 0 0 180px;
+  padding: 10px;
   text-align: left;
   background: #282f25;
   color: #f5f0df;
   border: 1px solid #c5ef5840;
   border-radius: 8px;
   cursor: pointer;
+  scroll-snap-align: start;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease;
+}
+.magazine-template-picker button:hover {
+  border-color: var(--lime);
+  transform: translateY(-2px);
 }
 .magazine-template-picker small {
   display: block;
   margin-top: 10px;
   line-height: 1.5;
+}
+.preset-preview {
+  position: relative;
+  display: block;
+  height: 112px;
+  margin-bottom: 11px;
+  overflow: hidden;
+  background: #f3eedf;
+  border-radius: 3px;
+}
+.preset-preview i {
+  position: absolute;
+  display: block;
+  background: #20251f;
+  opacity: 0.85;
+}
+.preset-preview i:nth-child(1) {
+  top: 12px;
+  left: 12px;
+  width: 58%;
+  height: 8px;
+}
+.preset-preview i:nth-child(2) {
+  top: 28px;
+  left: 12px;
+  width: 42%;
+  height: 4px;
+}
+.preset-preview i:nth-child(3) {
+  top: 42px;
+  left: 12px;
+  width: 76%;
+  height: 55px;
+  background: #a8b0a5;
+}
+.preset-preview i:nth-child(4) {
+  display: none;
+}
+.preset-preview--cover,
+.preset-preview--poster,
+.preset-preview--finale,
+.preset-preview--title {
+  background: linear-gradient(145deg, #66715f, #1b211c);
+}
+.preset-preview--cover i:nth-child(1),
+.preset-preview--poster i:nth-child(1) {
+  top: 64px;
+  width: 70%;
+  height: 18px;
+  background: #fff;
+}
+.preset-preview--title i:nth-child(1) {
+  top: 40px;
+  left: 25px;
+  width: 70%;
+  height: 14px;
+  background: var(--lime);
+}
+.preset-preview--finale i:nth-child(1) {
+  top: 22px;
+  width: 62%;
+  height: 16px;
+  background: #fff;
+}
+.preset-preview--contents i:nth-child(3) {
+  left: auto;
+  right: 10px;
+  width: 35%;
+}
+.preset-preview--contents i:nth-child(4) {
+  display: block;
+  top: 44px;
+  left: 12px;
+  width: 42%;
+  height: 48px;
+  background: repeating-linear-gradient(#20251f 0 3px, transparent 3px 11px);
+}
+.preset-preview--interview i:nth-child(3) {
+  left: auto;
+  right: 10px;
+  width: 42%;
+  height: 70px;
+}
+.preset-preview--interview i:nth-child(4) {
+  display: block;
+  top: 58px;
+  left: 12px;
+  width: 38%;
+  height: 28px;
+  border-left: 4px solid var(--lime);
+}
+.preset-preview--photo i:nth-child(3) {
+  top: 10px;
+  left: 10px;
+  width: calc(100% - 20px);
+  height: 76px;
+}
+.preset-preview--briefs i:nth-child(3) {
+  width: 24%;
+  height: 14px;
+  box-shadow:
+    0 20px #a8b0a5,
+    0 40px #a8b0a5;
+}
+.preset-preview--infographic i:nth-child(3) {
+  top: 54px;
+  height: 32px;
+  background: repeating-linear-gradient(90deg, #a8b0a5 0 20px, transparent 20px 34px);
+}
+.preset-preview--columns i:nth-child(3) {
+  background: repeating-linear-gradient(
+    90deg,
+    #a8b0a5 0 45%,
+    transparent 45% 52%,
+    #a8b0a5 52% 100%
+  );
 }
 .magazine-workspace {
   display: grid;

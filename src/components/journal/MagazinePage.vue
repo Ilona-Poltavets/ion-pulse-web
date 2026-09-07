@@ -16,6 +16,7 @@ const stories = computed(() =>
     .map((id) => props.materials.find((item) => item.id === id))
     .filter((item) => !!item),
 )
+const standalone = computed(() => ['cover', 'title', 'finale'].includes(props.page.template))
 const photoStyle = computed(() => ({
   width: `${props.page.image_width ?? 100}%`,
   height: `${props.page.image_height ?? 38}%`,
@@ -63,10 +64,13 @@ onBeforeUnmount(() => {
     :class="`magazine-page--${page.template}`"
     :style="{ '--ink-accent': page.accent }"
   >
-    <template v-if="page.template === 'cover'">
+    <template v-if="standalone">
       <img v-if="page.image_url" class="magazine-cover-photo" :src="page.image_url" alt="" />
       <div class="magazine-cover-shade"></div>
-      <div class="magazine-cover-brand">ION / PULSE <small>THE MONTHLY EDITION</small></div>
+      <div class="magazine-cover-brand">
+        {{ page.template === 'title' ? 'ION / PULSE — TITLE PAGE' : 'ION / PULSE' }}
+        <small>THE MONTHLY EDITION</small>
+      </div>
       <div
         class="magazine-cover-copy"
         :class="{ editable }"
@@ -91,7 +95,24 @@ onBeforeUnmount(() => {
           alt=""
         />
         <h2 v-if="page.heading" class="magazine-heading">{{ page.heading }}</h2>
-        <div class="magazine-stories">
+        <ol v-if="page.template === 'contents'" class="magazine-contents-list">
+          <li v-for="(story, index) in stories" :key="story.id">
+            <b>{{ String(number + index + 1).padStart(2, '0') }}</b>
+            <span
+              ><small>{{ story.category_slug }}</small
+              ><strong>{{ story.title }}</strong></span
+            >
+          </li>
+        </ol>
+        <div v-else-if="page.template === 'infographic'" class="magazine-infographic">
+          <section v-for="story in stories" :key="story.id">
+            <strong>{{ story.view_count }}</strong
+            ><span>просмотров</span> <b>{{ story.comment_count }}</b
+            ><span>комментариев</span>
+            <small>{{ story.title }}</small>
+          </section>
+        </div>
+        <div v-else class="magazine-stories">
           <section v-for="story in stories" :key="story.id" class="magazine-story">
             <small>{{ story.category_slug }}</small>
             <h2 v-if="!page.heading || stories.length > 1">{{ story.title }}</h2>
@@ -258,6 +279,70 @@ onBeforeUnmount(() => {
   outline: 1px dashed #fff8;
   outline-offset: 8px;
 }
+.magazine-page--title .magazine-cover-shade {
+  background: linear-gradient(135deg, #10110fdd, #10110f44);
+}
+.magazine-page--title .magazine-cover-copy {
+  text-align: center;
+}
+.magazine-page--finale .magazine-cover-shade {
+  background: linear-gradient(180deg, #f2b79922, #17201acc);
+}
+.magazine-page--finale .magazine-cover-copy {
+  padding-top: 18px;
+  border-top: 3px solid var(--ink-accent);
+}
+.magazine-contents-list {
+  display: grid;
+  gap: 16px;
+  padding: 12px 0;
+  list-style: none;
+}
+.magazine-contents-list li {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #23251f33;
+}
+.magazine-contents-list b {
+  color: var(--ink-accent);
+  font: 700 22px/1 Georgia;
+  text-shadow: 0 0 1px #222;
+}
+.magazine-contents-list span {
+  display: grid;
+  gap: 3px;
+}
+.magazine-contents-list strong {
+  font-size: 17px;
+  line-height: 1.2;
+}
+.magazine-infographic {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.magazine-infographic section {
+  display: grid;
+  padding: 18px;
+  background: #23251f0d;
+  border-top: 4px solid var(--ink-accent);
+}
+.magazine-infographic strong {
+  font: 700 40px/1 Georgia;
+}
+.magazine-infographic b {
+  margin-top: 12px;
+  font-size: 22px;
+}
+.magazine-infographic span,
+.magazine-infographic small {
+  font: 10px/1.4 monospace;
+}
+.magazine-infographic small {
+  margin-top: 14px;
+}
 .magazine-page--columns .magazine-copy {
   column-count: 2;
   column-gap: 22px;
@@ -288,6 +373,12 @@ onBeforeUnmount(() => {
 }
 .magazine-page--briefs .magazine-story h2 {
   font-size: 22px;
+}
+.magazine-page--photo .magazine-photo {
+  height: 62% !important;
+}
+.magazine-page--photo .magazine-copy {
+  font-style: italic;
 }
 .magazine-page--poster {
   background: #20251f;
