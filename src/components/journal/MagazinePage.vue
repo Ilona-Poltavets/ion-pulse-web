@@ -86,7 +86,13 @@ onBeforeUnmount(() => {
     </template>
     <template v-else>
       <header class="magazine-running"><b>ION / PULSE</b><span>THE MONTHLY EDITION</span></header>
-      <div class="magazine-paper-content" :class="`image-${page.image_position || 'full'}`">
+      <div
+        class="magazine-paper-content"
+        :class="[
+          `image-${page.image_position || 'full'}`,
+          { 'is-continuation': page.continuation },
+        ]"
+      >
         <img
           v-if="page.image_url"
           class="magazine-photo"
@@ -115,8 +121,10 @@ onBeforeUnmount(() => {
         <div v-else class="magazine-stories">
           <section v-for="story in stories" :key="story.id" class="magazine-story">
             <small>{{ story.category_slug }}</small>
-            <h2 v-if="!page.heading || stories.length > 1">{{ story.title }}</h2>
-            <p class="magazine-deck">{{ story.summary }}</p>
+            <h2 v-if="!page.continuation && (!page.heading || stories.length > 1)">
+              {{ story.title }}
+            </h2>
+            <p v-if="!page.continuation" class="magazine-deck">{{ story.summary }}</p>
             <ContentBody
               class="magazine-copy"
               :body="page.text && stories.length === 1 ? page.text : story.body"
@@ -168,7 +176,7 @@ onBeforeUnmount(() => {
   margin-top: auto;
 }
 .magazine-paper-content {
-  overflow: auto;
+  overflow: hidden;
   flex: 1;
   padding: 18px 0;
   min-height: 0;
@@ -197,6 +205,9 @@ onBeforeUnmount(() => {
   line-height: 1.65;
   white-space: normal;
   overflow-wrap: anywhere;
+  column-count: 2;
+  column-gap: 22px;
+  column-rule: 1px solid #23251f1f;
 }
 .magazine-story a {
   display: block;
@@ -347,9 +358,9 @@ onBeforeUnmount(() => {
 .magazine-infographic small {
   margin-top: 14px;
 }
-.magazine-page--columns .magazine-copy {
-  column-count: 2;
-  column-gap: 22px;
+.magazine-paper-content.is-continuation .magazine-story small,
+.magazine-paper-content.is-continuation .magazine-story a {
+  display: none;
 }
 .magazine-page--feature .magazine-copy:first-letter {
   float: left;

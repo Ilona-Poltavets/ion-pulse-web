@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import MagazinePage from '@/components/journal/MagazinePage.vue'
+import { contentText } from '@/components/content/contentFormat'
 import {
   createJournalIssue,
   listJournalCandidates,
@@ -257,6 +258,41 @@ function paginateText() {
   pages.value.splice(active.value + 1, 0, ...continuationPages)
   message.value = `Текст перенесён на ${continuationPages.length} стр. продолжения.`
 }
+function toggleMaterial(target: JournalPage, publicationId: string, selected: boolean): void {
+  if (!selected) {
+    target.publication_ids = target.publication_ids.filter((id) => id !== publicationId)
+    const targetIndex = pages.value.indexOf(target)
+    while (
+      pages.value[targetIndex + 1]?.continuation &&
+      pages.value[targetIndex + 1]?.publication_ids.includes(publicationId)
+    ) {
+      pages.value.splice(targetIndex + 1, 1)
+    }
+    return
+  }
+  if (!target.publication_ids.includes(publicationId)) target.publication_ids.push(publicationId)
+  if (target.publication_ids.length !== 1 || target.text.trim()) return
+  const publication = candidates.value.find((item) => item.id === publicationId)
+  if (!publication) return
+  target.text = contentText(publication.body)
+  requestAnimationFrame(paginateText)
+}
+function selectPage(index: number): void {
+  active.value = index
+  const target = pages.value[index]
+  if (
+    !target ||
+    target.continuation ||
+    target.text.trim() ||
+    target.publication_ids.length !== 1 ||
+    ['cover', 'title', 'finale'].includes(target.template)
+  )
+    return
+  const publication = candidates.value.find((item) => item.id === target.publication_ids[0])
+  if (!publication) return
+  target.text = contentText(publication.body)
+  requestAnimationFrame(paginateText)
+}
 function move(delta: number) {
   const target = active.value + delta
   if (target < 0 || target >= pages.value.length) return
@@ -273,7 +309,7 @@ function openDraft(draft: JournalIssue) {
   title.value = draft.title
   month.value = draft.period_start.slice(0, 7)
   pages.value = (JSON.parse(JSON.stringify(draft.pages)) as JournalPage[]).map(normalizePage)
-  active.value = 0
+  selectPage(0)
   saved.value = fingerprint.value
   published.value = false
 }
@@ -381,7 +417,7 @@ async function publish() {
               :key="index"
               class="magazine-page-tab"
               :class="{ active: active === index }"
-              @click="active = index"
+              @click="selectPage(index)"
             >
               {{ index + 1 }} /
               {{ entry.heading || templates.find((t) => t.id === entry.template)?.name }}
@@ -492,12 +528,14 @@ async function publish() {
                 <p v-if="!sorted.length">За выбранный и предыдущий месяц материалов нет.</p>
                 <label v-for="item in sorted" :key="item.id" class="magazine-candidate"
                   ><input
-                    v-model="page.publication_ids"
                     type="checkbox"
-                    :value="item.id"
+                    :checked="page.publication_ids.includes(item.id)"
                     :disabled="
                       page.publication_ids.length >= materialLimit(page.template) &&
                       !page.publication_ids.includes(item.id)
+                    "
+                    @change="
+                      toggleMaterial(page, item.id, ($event.target as HTMLInputElement).checked)
                     "
                   /><span
                     >{{ item.title
