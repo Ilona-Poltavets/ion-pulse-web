@@ -476,7 +476,7 @@ async function publish() {
                   @blur="paginateText"
                 />
               </label>
-              <h3 v-if="!standalonePage">Материалы месяца</h3>
+              <h3 v-if="!standalonePage">Материалы за два месяца</h3>
               <template v-if="!standalonePage">
                 <input
                   v-model="search"
@@ -489,7 +489,7 @@ async function publish() {
                   <option value="view_count">Просмотры</option>
                   <option value="comment_count">Комментарии</option>
                 </select>
-                <p v-if="!sorted.length">За этот месяц новостей нет.</p>
+                <p v-if="!sorted.length">За выбранный и предыдущий месяц материалов нет.</p>
                 <label v-for="item in sorted" :key="item.id" class="magazine-candidate"
                   ><input
                     v-model="page.publication_ids"
