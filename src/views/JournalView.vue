@@ -1,297 +1,337 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import MagazineReader from '@/components/journal/MagazineReader.vue'
 import {
-  listJournalIssuePublications,
+  getJournalMaterials,
   listJournalIssues,
-  type DigestItem,
+  type JournalCandidate,
   type JournalIssue,
+  type JournalPage,
 } from '@/services/api'
-
-const issues = ref<JournalIssue[]>([])
-const selected = ref<JournalIssue | null>(null)
-const publications = ref<DigestItem[]>([])
-const error = ref('')
-const isViewerOpen = ref(false)
-const viewerPage = ref(0)
-const isTurning = ref(false)
-const turnDirection = ref<'next' | 'previous'>('next')
-const { locale, t } = useI18n()
 const route = useRoute()
-const router = useRouter()
-const selectedIssueIndex = computed(() =>
-  selected.value ? issues.value.findIndex((issue) => issue.id === selected.value?.id) : -1,
+const auth = useAuthStore()
+const { locale } = useI18n()
+const issues = ref<JournalIssue[]>([])
+const selected = computed(
+  () =>
+    issues.value.find((i) => i.id === route.params.id) ||
+    (!route.params.id ? issues.value[0] : undefined),
 )
-const previousIssue = computed(() =>
-  selectedIssueIndex.value > 0 ? issues.value[selectedIssueIndex.value - 1] : null,
+const materials = ref<JournalCandidate[]>([])
+const error = ref('')
+const loading = ref(true)
+const reading = computed(() => route.name === 'journal-reader')
+const canEdit = computed(() =>
+  auth.user?.roles.some((r) => ['editor', 'administrator'].includes(r)),
 )
-const nextIssue = computed(() =>
-  selectedIssueIndex.value >= 0 && selectedIssueIndex.value < issues.value.length - 1
-    ? issues.value[selectedIssueIndex.value + 1]
-    : null,
+const pages = computed<JournalPage[]>(() =>
+  selected.value?.pages.length
+    ? selected.value.pages
+    : materials.value.map((m) => ({
+        template: 'feature',
+        publication_ids: [m.id],
+        heading: '',
+        text: '',
+        image_url: '',
+        accent: '#c5ef58',
+      })),
 )
-const viewerLeft = computed(() => publications.value[viewerPage.value])
-const viewerRight = computed(() => publications.value[viewerPage.value + 1])
-const viewerTurnBack = computed(() => publications.value[viewerPage.value + 2])
-const canTurnNext = computed(() => viewerPage.value + 2 < publications.value.length)
-const canTurnPrevious = computed(() => viewerPage.value > 0)
-
-async function openIssue(issue: JournalIssue, updateRoute = true): Promise<void> {
-  isViewerOpen.value = false
-  selected.value = issue
-  if (updateRoute) await router.push(`/journal/${issue.id}`)
+const ranked = computed(() => [...materials.value].sort((a, b) => b.score - a.score))
+let version = 0
+watch([() => selected.value?.id, locale], async () => {
+  const request = ++version
+  materials.value = []
+  error.value = ''
+  if (!selected.value) return
+  loading.value = true
   try {
-    publications.value = await listJournalIssuePublications(issue.id, locale.value as 'ru' | 'en')
-  } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : t('journal.openError')
-  }
-}
-
-function openViewer(): void {
-  viewerPage.value = 0
-  isViewerOpen.value = true
-}
-
-function closeViewer(): void {
-  isViewerOpen.value = false
-}
-
-function turnPage(direction: 'next' | 'previous'): void {
-  if (
-    isTurning.value ||
-    (direction === 'next' && !canTurnNext.value) ||
-    (direction === 'previous' && !canTurnPrevious.value)
-  ) {
-    return
-  }
-  turnDirection.value = direction
-  isTurning.value = true
-  window.setTimeout(() => {
-    viewerPage.value += direction === 'next' ? 1 : -1
-    isTurning.value = false
-  }, 620)
-}
-
-function handleViewerKey(event: KeyboardEvent): void {
-  if (!isViewerOpen.value) return
-  if (event.key === 'Escape') closeViewer()
-  if (event.key === 'ArrowRight') turnPage('next')
-  if (event.key === 'ArrowLeft') turnPage('previous')
-}
-
-onMounted(async () => {
-  window.addEventListener('keydown', handleViewerKey)
-  try {
-    issues.value = await listJournalIssues()
-    const issue = issues.value.find((entry) => entry.id === route.params.id)
-    if (issue) await openIssue(issue, false)
-  } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : t('journal.loadError')
+    const data = await getJournalMaterials(selected.value.id, locale.value)
+    if (request === version) materials.value = data
+  } catch (e) {
+    if (request === version) error.value = String(e)
+  } finally {
+    if (request === version) loading.value = false
   }
 })
-
-onBeforeUnmount(() => window.removeEventListener('keydown', handleViewerKey))
-
-watch(
-  () => route.params.id,
-  async (issueId) => {
-    const issue = issues.value.find((entry) => entry.id === issueId)
-    if (issue && selected.value?.id !== issue.id) await openIssue(issue, false)
-  },
-)
-
-watch(locale, () => {
-  if (selected.value) void openIssue(selected.value, false)
+onMounted(async () => {
+  try {
+    issues.value = await listJournalIssues()
+  } catch (e) {
+    error.value = String(e)
+  } finally {
+    loading.value = false
+  }
+})
+onBeforeUnmount(() => {
+  version++
 })
 </script>
 <template>
-  <section class="editorial-page">
+  <section class="editorial-page monthly-journal">
     <header class="queue-header">
       <div>
-        <p class="eyebrow">ION PULSE WEEKLY</p>
-        <h1>{{ t('journal.title') }}</h1>
+        <p class="eyebrow">ION PULSE / MONTHLY</p>
+        <h1>{{ reading ? selected?.title : 'Журнал' }}</h1>
+        <p>Главное за месяц. На страницах, которые хочется сохранить.</p>
       </div>
-    </header>
-    <p v-if="error" class="form-error">{{ error }}</p>
-    <p v-else-if="!issues.length" class="empty-state">{{ t('journal.empty') }}</p>
-    <nav v-else class="journal-shelf" :aria-label="t('journal.issues')">
-      <button
-        v-for="issue in issues"
-        :key="issue.id"
-        class="journal-spine"
-        :class="{ selected: selected?.id === issue.id }"
-        :aria-current="selected?.id === issue.id ? 'page' : undefined"
-        @click="openIssue(issue)"
+      <RouterLink v-if="canEdit" class="button button-primary" to="/journal/candidates"
+        >Создать журнал</RouterLink
       >
-        <span>ION PULSE</span>
-        <strong>{{ issue.title }}</strong
-        ><small
-          >{{ new Date(issue.period_start).toLocaleDateString(locale) }} —
-          {{ new Date(issue.period_end).toLocaleDateString(locale) }}</small
-        >
-      </button>
-    </nav>
-    <section v-if="selected" class="journal-reader" aria-labelledby="journal-title">
-      <section class="journal-virtual" :aria-label="t('journal.virtualReader')">
-        <div
-          class="journal-book"
-          role="button"
-          tabindex="0"
-          @click="openViewer"
-          @keydown.enter="openViewer"
-          @keydown.space.prevent="openViewer"
-        >
-          <header class="journal-book__cover">
-            <p class="eyebrow">{{ t('journal.weeklyIssue') }}</p>
-            <p class="journal-cover-number">
-              {{ String(selectedIssueIndex + 1).padStart(2, '0') }}
-            </p>
-            <h2 id="journal-title">{{ selected.title }}</h2>
-            <p>
-              {{ new Date(selected.period_start).toLocaleDateString(locale) }} —
-              {{ new Date(selected.period_end).toLocaleDateString(locale) }}
-            </p>
-            <span>ION PULSE</span>
-          </header>
-          <span v-if="publications[0]" class="journal-book__page journal-book__page--left">
-            <small>{{ t('journal.page', { number: '01' }) }}</small>
-            <span>{{ publications[0].category_slug }}</span>
-            <h3>{{ publications[0].title }}</h3>
-            <p>{{ publications[0].summary }}</p>
-          </span>
-          <span v-if="publications[1]" class="journal-book__page journal-book__page--right">
-            <small>{{ t('journal.page', { number: '02' }) }}</small>
-            <span>{{ publications[1].category_slug }}</span>
-            <h3>{{ publications[1].title }}</h3>
-            <p>{{ publications[1].summary }}</p>
-          </span>
+    </header>
+    <p v-if="error" role="alert" class="form-error">{{ error }}</p>
+    <p v-if="loading" role="status">Загружаем выпуск…</p>
+    <p v-else-if="!selected" class="empty-state">
+      {{ route.params.id ? 'Выпуск не найден.' : 'Первый выпуск ещё готовится.' }}
+    </p>
+    <template v-if="selected">
+      <template v-if="!reading">
+        <nav class="monthly-shelf" aria-label="Выпуски">
+          <RouterLink
+            v-for="issue in issues"
+            :key="issue.id"
+            :to="`/journal/${issue.id}`"
+            :class="{ active: selected.id === issue.id }"
+            >{{ issue.title }}</RouterLink
+          >
+        </nav>
+        <div class="monthly-hero">
+          <RouterLink
+            class="monthly-book"
+            :to="`/journal/${selected.id}/read`"
+            aria-label="Открыть журнал"
+          >
+            <span class="monthly-book-back" /><span class="monthly-book-paper"
+              ><b>В ЭТОМ НОМЕРЕ</b
+              ><span v-for="item in ranked.slice(0, 3)" :key="item.id">{{ item.title }}</span
+              ><em>Открыть выпуск →</em></span
+            >
+            <div class="monthly-book-cover">
+              <span>НЕЗАВИСИМЫЙ ИГРОВОЙ ЖУРНАЛ</span><strong>ION<br />PULSE<span>®</span></strong>
+              <div class="monthly-cover-art">✳</div>
+              <h2>{{ selected.title }}</h2>
+              <footer>
+                {{ selected.period_start.slice(0, 7) }} <span>{{ pages.length }} СТР.</span>
+              </footer>
+            </div>
+          </RouterLink>
+          <div class="monthly-intro">
+            <p class="eyebrow">НОВЫЙ ВЫПУСК · {{ selected.period_start.slice(0, 7) }}</p>
+            <h2>Месяц.<br />Бумага.<br /><em>Память.</em></h2>
+            <p>Новости, истории и открытия — в ритме настоящего журнала.</p>
+            <RouterLink class="button button-primary" :to="`/journal/${selected.id}/read`"
+              >Листать журнал ↗</RouterLink
+            >
+          </div>
         </div>
-      </section>
-      <div class="journal-contents">
-        <header>
-          <p class="eyebrow">{{ t('journal.weeklyIssue') }}</p>
-          <h3>{{ t('journal.contents') }}</h3>
-        </header>
-        <ol>
-          <li v-for="(item, index) in publications" :key="item.id">
-            <RouterLink :to="`/publications/${item.id}`">
-              <span>{{ String(index + 1).padStart(2, '0') }}</span>
-              <div>
-                <small>{{ item.category_slug }}</small
-                ><strong>{{ item.title }}</strong>
-              </div>
-              <i aria-hidden="true">→</i>
-            </RouterLink>
+        <h2>В этом выпуске</h2>
+        <p>Самые популярные и обсуждаемые материалы — первыми.</p>
+        <ol class="monthly-contents">
+          <li v-for="(item, index) in ranked" :key="item.id">
+            <span>{{ String(index + 1).padStart(2, '0') }}</span
+            ><RouterLink :to="`/publications/${item.id}`"
+              ><small>{{ item.category_slug }}</small>
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.summary }}</p></RouterLink
+            ><small>◉ {{ item.view_count }}<br />◇ {{ item.comment_count }}</small>
           </li>
         </ol>
-      </div>
-      <div class="journal-pages">
-        <RouterLink
-          v-for="(item, index) in publications"
-          :key="item.id"
-          :to="`/publications/${item.id}`"
-        >
-          <span>{{ t('journal.page', { number: String(index + 1).padStart(2, '0') }) }}</span>
-          <small>{{ item.category_slug }}</small>
-          <h3>{{ item.title }}</h3>
-          <p>{{ item.summary }}</p>
-          <strong>{{ t('journal.readStory') }}</strong>
-        </RouterLink>
-      </div>
-      <nav class="journal-pagination" :aria-label="t('journal.issueNavigation')">
-        <button
-          v-if="previousIssue"
-          class="button button-secondary"
-          @click="openIssue(previousIssue)"
-        >
-          {{ t('journal.previous') }}
-        </button>
-        <span v-else />
-        <button v-if="nextIssue" class="button button-secondary" @click="openIssue(nextIssue)">
-          {{ t('journal.next') }}
-        </button>
-      </nav>
-    </section>
-    <Teleport to="body">
-      <Transition name="journal-viewer">
-        <section
-          v-if="isViewerOpen"
-          class="journal-viewer"
-          role="dialog"
-          aria-modal="true"
-          :aria-label="t('journal.virtualReader')"
-          @click.self="closeViewer"
-        >
-          <header class="journal-viewer__toolbar">
-            <span>ION PULSE · {{ selected?.title }}</span>
-            <button type="button" @click="closeViewer">
-              × <span>{{ t('common.close') }}</span>
-            </button>
-          </header>
-          <div class="journal-viewer__stage">
-            <div
-              class="journal-viewer__book"
-              :class="{ 'is-turning': isTurning, 'is-turning-back': turnDirection === 'previous' }"
-            >
-              <article v-if="viewerLeft" class="journal-viewer__page journal-viewer__page--left">
-                <small>{{
-                  t('journal.page', { number: String(viewerPage + 1).padStart(2, '0') })
-                }}</small>
-                <span>{{ viewerLeft.category_slug }}</span>
-                <h2>{{ viewerLeft.title }}</h2>
-                <p>{{ viewerLeft.summary }}</p>
-              </article>
-              <article v-if="viewerRight" class="journal-viewer__page journal-viewer__page--right">
-                <small>{{
-                  t('journal.page', { number: String(viewerPage + 2).padStart(2, '0') })
-                }}</small>
-                <span>{{ viewerRight.category_slug }}</span>
-                <h2>{{ viewerRight.title }}</h2>
-                <p>{{ viewerRight.summary }}</p>
-              </article>
-              <div v-if="isTurning && viewerRight" class="journal-viewer__leaf">
-                <article class="journal-viewer__leaf-face journal-viewer__leaf-face--front">
-                  <small>{{
-                    t('journal.page', { number: String(viewerPage + 2).padStart(2, '0') })
-                  }}</small
-                  ><span>{{ viewerRight.category_slug }}</span>
-                  <h2>{{ viewerRight.title }}</h2>
-                </article>
-                <article class="journal-viewer__leaf-face journal-viewer__leaf-face--back">
-                  <small>{{
-                    t('journal.page', { number: String(viewerPage + 3).padStart(2, '0') })
-                  }}</small
-                  ><span>{{ viewerTurnBack?.category_slug }}</span>
-                  <h2>{{ viewerTurnBack?.title }}</h2>
-                </article>
-              </div>
-            </div>
-          </div>
-          <footer class="journal-viewer__controls">
-            <button
-              class="button button-secondary"
-              type="button"
-              :disabled="!canTurnPrevious || isTurning"
-              @click="turnPage('previous')"
-            >
-              {{ t('journal.previous') }}
-            </button>
-            <span
-              >{{ viewerPage + 1 }}–{{ Math.min(viewerPage + 2, publications.length) }} /
-              {{ publications.length }}</span
-            >
-            <button
-              class="button button-primary"
-              type="button"
-              :disabled="!canTurnNext || isTurning"
-              @click="turnPage('next')"
-            >
-              {{ t('journal.next') }}
-            </button>
-          </footer>
-        </section>
-      </Transition>
-    </Teleport>
+      </template>
+      <template v-else>
+        <div class="monthly-reader-bar">
+          <RouterLink :to="`/journal/${selected.id}`">← К выпуску</RouterLink>
+        </div>
+        <MagazineReader v-if="pages.length" :pages="pages" :materials="materials" />
+      </template>
+    </template>
   </section>
 </template>
+<style>
+.monthly-shelf {
+  display: flex;
+  gap: 12px;
+  overflow: auto;
+  padding: 12px 0;
+}
+.monthly-shelf a {
+  padding: 12px 18px;
+  border: 1px solid #7775;
+  white-space: nowrap;
+  color: inherit;
+  text-decoration: none;
+}
+.monthly-shelf a.active {
+  border-color: #c5ef58;
+}
+.monthly-hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 110px;
+  padding: 70px 30px;
+  background: radial-gradient(ellipse at 35% 50%, #59613a33, transparent 65%);
+  overflow: hidden;
+}
+.monthly-book {
+  position: relative;
+  display: block;
+  width: 300px;
+  height: 410px;
+  flex-shrink: 0;
+  perspective: 1800px;
+  transform: rotate(-5deg);
+  color: #1e251c;
+  text-decoration: none;
+}
+.monthly-book-cover,
+.monthly-book-paper,
+.monthly-book-back {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  border-radius: 2px 9px 9px 2px;
+  transition: transform 0.8s cubic-bezier(0.2, 0.6, 0.2, 1);
+  box-shadow: 12px 20px 30px #0005;
+}
+.monthly-book-back {
+  background: #2b3225;
+  transform: translateZ(-12px) translateX(10px);
+}
+.monthly-book-paper {
+  background: repeating-linear-gradient(to right, #e2dbc6 0 1px, #f7f1df 1px 3px);
+  padding: 25px 24px 25px 45px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 12px;
+  font:
+    16px Georgia,
+    serif;
+}
+.monthly-book-paper b {
+  font: 11px monospace;
+}
+.monthly-book-cover {
+  background: #c5ef58;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  border-left: 12px solid #a7cd47;
+  backface-visibility: hidden;
+}
+.monthly-book-cover > span {
+  font: 8px monospace;
+  letter-spacing: 1px;
+}
+.monthly-book-cover > strong {
+  font: 900 64px/0.84 sans-serif;
+  letter-spacing: -6px;
+  margin-top: 18px;
+}
+.monthly-book-cover > strong span {
+  font-size: 20px;
+  vertical-align: top;
+  letter-spacing: 0;
+}
+.monthly-cover-art {
+  font: 140px/0.9 Georgia;
+  text-align: right;
+  flex: 1;
+}
+.monthly-book-cover h2 {
+  font: 700 19px/1.1 sans-serif;
+  margin: 12px 0;
+}
+.monthly-book-cover footer {
+  display: flex;
+  justify-content: space-between;
+  border-top: 2px solid;
+  padding-top: 10px;
+  font: 10px monospace;
+}
+.monthly-book:hover .monthly-book-cover,
+.monthly-book:focus-visible .monthly-book-cover {
+  transform: rotateY(-65deg);
+}
+.monthly-book:hover .monthly-book-paper {
+  transform: rotateY(-8deg);
+}
+.monthly-intro h2 {
+  font:
+    700 clamp(40px, 6vw, 76px)/1 Georgia,
+    serif;
+  margin: 20px 0;
+}
+.monthly-intro em {
+  color: #c5ef58;
+}
+.monthly-intro p {
+  max-width: 280px;
+  line-height: 1.7;
+}
+.monthly-contents {
+  list-style: none;
+  padding: 0;
+}
+.monthly-contents li {
+  display: flex;
+  align-items: start;
+  gap: 24px;
+  border-top: 1px solid #7774;
+  padding: 24px 0;
+}
+.monthly-contents li > span {
+  font: 32px Georgia;
+  color: #8e987e;
+}
+.monthly-contents a {
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+.monthly-contents h3 {
+  margin: 8px 0;
+}
+.monthly-contents small {
+  text-transform: uppercase;
+  line-height: 1.8;
+}
+.monthly-reader-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 0;
+}
+.monthly-reader-bar a {
+  color: inherit;
+}
+@media (max-width: 700px) {
+  .monthly-hero {
+    gap: 45px;
+    flex-direction: column;
+    padding: 45px 15px;
+  }
+  .monthly-book {
+    width: 260px;
+    height: 370px;
+  }
+  .monthly-intro {
+    text-align: center;
+  }
+  .monthly-intro h2 {
+    font-size: 48px;
+  }
+  .monthly-reader-bar {
+    font-size: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .monthly-book-cover,
+  .monthly-book-paper {
+    transition: none;
+  }
+}
+</style>

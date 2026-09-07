@@ -25,6 +25,7 @@ const router = createRouter({
     },
     { path: '/content/categories', name: 'categories-management', component: CategoriesView },
     { path: '/journal/candidates', name: 'journal-candidates', component: JournalCandidatesView },
+    { path: '/journal/:id/read', name: 'journal-reader', component: JournalView },
     { path: '/journal/:id?', name: 'journal', component: JournalView },
     { path: '/login', name: 'login', component: AuthView, props: { mode: 'login' } },
     { path: '/register', name: 'register', component: AuthView, props: { mode: 'register' } },

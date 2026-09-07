@@ -95,12 +95,23 @@ export interface DigestItem {
   summary: string
 }
 export interface JournalCandidate extends DigestItem {
+  body: string
+  view_count: number
   published_at: string
   average_rating: number
   comment_count: number
   score: number
 }
+export interface JournalPage {
+  template: 'feature' | 'columns' | 'interview' | 'briefs' | 'poster'
+  publication_ids: string[]
+  heading: string
+  text: string
+  image_url: string
+  accent: string
+}
 export interface JournalIssue {
+  pages: JournalPage[]
   id: string
   title: string
   period_start: string
@@ -210,8 +221,35 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { Accept: 'application/json', ...init?.headers },
     ...init,
   })
-  if (!response.ok)
-    throw new Error((await response.json().catch(() => null))?.detail ?? 'Request failed')
+  if (!response.ok) {
+    const detail: unknown = (await response.json().catch(() => null))?.detail
+    const messages = Array.isArray(detail)
+      ? detail.flatMap((entry: unknown) => {
+          if (
+            !entry ||
+            typeof entry !== 'object' ||
+            !('msg' in entry) ||
+            typeof entry.msg !== 'string'
+          )
+            return []
+          const field =
+            'loc' in entry && Array.isArray(entry.loc)
+              ? entry.loc
+                  .filter(
+                    (part: unknown) =>
+                      (typeof part === 'string' && part !== 'body') || typeof part === 'number',
+                  )
+                  .join('.')
+              : ''
+          return [field ? `${field}: ${entry.msg}` : entry.msg]
+        })
+      : []
+    throw new Error(
+      typeof detail === 'string'
+        ? detail
+        : messages.join('; ') || `Request failed (${response.status})`,
+    )
+  }
   if (response.status === 204) return undefined as T
   return (await response.json()) as T
 }
@@ -420,8 +458,13 @@ export function updateCategory(
 export function listDigestItems(id: string, locale: 'ru' | 'en'): Promise<DigestItem[]> {
   return request(`/publications/published/${id}/digest-items?locale=${locale}`)
 }
-export function listJournalCandidates(locale: 'ru' | 'en'): Promise<JournalCandidate[]> {
-  return request(`/publications/journal-candidates?locale=${locale}`)
+export function listJournalCandidates(
+  locale: 'ru' | 'en',
+  month?: string,
+): Promise<JournalCandidate[]> {
+  return request(
+    `/publications/journal-candidates?locale=${locale}${month ? `&month=${month}` : ''}`,
+  )
 }
 export function createJournalIssue(payload: {
   title: string
@@ -605,4 +648,17 @@ export async function deleteMyAccount(payload: {
     body: JSON.stringify(payload),
     headers: { 'Content-Type': 'application/json' },
   })
+}
+
+export function listJournalDrafts(): Promise<JournalIssue[]> {
+  return request('/journal/drafts')
+}
+export function saveJournalIssue(
+  id: string,
+  payload: Pick<JournalIssue, 'title' | 'period_start' | 'period_end' | 'pages'>,
+): Promise<JournalIssue> {
+  return request(`/journal/issues/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
+}
+export function getJournalMaterials(id: string, locale: string): Promise<JournalCandidate[]> {
+  return request(`/journal/issues/${id}/materials?locale=${locale}`)
 }

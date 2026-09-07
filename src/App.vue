@@ -39,82 +39,81 @@ void auth.restore()
     <header class="site-header">
       <div class="site-header__inner">
         <RouterLink class="brand" to="/" aria-label="Ion Pulse">
-        <span class="brand-mark" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </span>
-        <span>ION PULSE</span>
+          <span class="brand-mark" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+          <span>ION PULSE</span>
         </RouterLink>
 
         <nav class="main-navigation" :aria-label="t('navigation.primary')">
-        <RouterLink to="/">{{ t('navigation.feed') }}</RouterLink>
-        <RouterLink to="/#categories">{{ t('navigation.categories') }}</RouterLink>
-        <RouterLink to="/journal">{{ t('navigation.journal') }}</RouterLink>
-        <RouterLink v-if="auth.isAuthenticated" to="/write">{{ t('navigation.write') }}</RouterLink>
+          <RouterLink to="/">{{ t('navigation.feed') }}</RouterLink>
+          <RouterLink to="/#categories">{{ t('navigation.categories') }}</RouterLink>
+          <RouterLink to="/journal">{{ t('navigation.journal') }}</RouterLink>
+          <RouterLink v-if="auth.isAuthenticated" to="/write">{{
+            t('navigation.write')
+          }}</RouterLink>
         </nav>
 
         <div class="header-actions">
-        <RouterLink v-if="!auth.isAuthenticated" class="account-link" to="/login">{{
-          t('navigation.login')
-        }}</RouterLink>
-        <RouterLink v-else class="account-link" to="/profile">{{
-          auth.user?.display_name
-        }}</RouterLink>
-        <details v-if="isStaff" class="workspace-menu">
-          <summary>{{ t('navigation.workspace') }}</summary>
-          <div class="workspace-menu-panel">
-            <RouterLink
-              v-if="
-                auth.user?.roles.includes('content_manager') ||
-                auth.user?.roles.includes('administrator')
-              "
-              to="/content/categories"
-              >{{ t('navigation.categories') }}</RouterLink
-            >
-            <RouterLink
-              v-if="auth.user?.roles.includes('administrator')"
-              to="/admin/author-applications"
-              >{{ t('navigation.admin') }}</RouterLink
-            >
-            <RouterLink v-if="auth.user?.roles.includes('administrator')" to="/admin/users">{{
-              t('navigation.roles')
-            }}</RouterLink>
-            <RouterLink
-              v-if="
-                auth.user?.roles.includes('editor') || auth.user?.roles.includes('administrator')
-              "
-              to="/editorial-queue"
-              >{{ t('navigation.editorial') }}</RouterLink
-            >
-            <RouterLink
-              v-if="
-                auth.user?.roles.some((role) =>
-                  ['editor', 'moderator', 'administrator'].includes(role),
-                )
-              "
-              to="/journal/candidates"
-              >{{ t('navigation.journal') }}</RouterLink
-            >
-            <RouterLink
-              v-if="
-                auth.user?.roles.includes('moderator') || auth.user?.roles.includes('administrator')
-              "
-              to="/moderation/reports"
-              >{{ t('navigation.moderation') }}</RouterLink
-            >
-          </div>
-        </details>
-        <button
-          v-if="auth.isAuthenticated"
-          class="account-link"
-          type="button"
-          @click="auth.signOut"
-        >
-          {{ t('navigation.logout') }}
-        </button>
+          <RouterLink v-if="!auth.isAuthenticated" class="account-link" to="/login">{{
+            t('navigation.login')
+          }}</RouterLink>
+          <RouterLink v-else class="account-link" to="/profile">{{
+            auth.user?.display_name
+          }}</RouterLink>
+          <details v-if="isStaff" class="workspace-menu">
+            <summary>{{ t('navigation.workspace') }}</summary>
+            <div class="workspace-menu-panel">
+              <RouterLink
+                v-if="
+                  auth.user?.roles.includes('content_manager') ||
+                  auth.user?.roles.includes('administrator')
+                "
+                to="/content/categories"
+                >{{ t('navigation.categories') }}</RouterLink
+              >
+              <RouterLink
+                v-if="auth.user?.roles.includes('administrator')"
+                to="/admin/author-applications"
+                >{{ t('navigation.admin') }}</RouterLink
+              >
+              <RouterLink v-if="auth.user?.roles.includes('administrator')" to="/admin/users">{{
+                t('navigation.roles')
+              }}</RouterLink>
+              <RouterLink
+                v-if="
+                  auth.user?.roles.includes('editor') || auth.user?.roles.includes('administrator')
+                "
+                to="/editorial-queue"
+                >{{ t('navigation.editorial') }}</RouterLink
+              >
+              <RouterLink
+                v-if="auth.user?.roles.some((role) => ['editor', 'administrator'].includes(role))"
+                to="/journal/candidates"
+                >{{ t('navigation.journal') }}</RouterLink
+              >
+              <RouterLink
+                v-if="
+                  auth.user?.roles.includes('moderator') ||
+                  auth.user?.roles.includes('administrator')
+                "
+                to="/moderation/reports"
+                >{{ t('navigation.moderation') }}</RouterLink
+              >
+            </div>
+          </details>
+          <button
+            v-if="auth.isAuthenticated"
+            class="account-link"
+            type="button"
+            @click="auth.signOut"
+          >
+            {{ t('navigation.logout') }}
+          </button>
           <details ref="localeMenu" class="locale-switcher">
-          <span class="sr-only">{{ t('navigation.language') }}</span>
+            <span class="sr-only">{{ t('navigation.language') }}</span>
             <summary :aria-label="t('navigation.language')">
               <span>{{ locale.toUpperCase() }}</span>
             </summary>
