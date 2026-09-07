@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import MagazinePage from '@/components/journal/MagazinePage.vue'
 import { contentText } from '@/components/content/contentFormat'
@@ -16,6 +17,7 @@ import {
   type JournalPage,
 } from '@/services/api'
 const auth = useAuthStore()
+const route = useRoute()
 const { locale } = useI18n()
 const allowed = computed(() =>
   auth.user?.roles.some((r) => ['editor', 'administrator'].includes(r)),
@@ -158,6 +160,8 @@ onMounted(async () => {
     await load()
     try {
       drafts.value = await listJournalDrafts()
+      const requestedDraft = drafts.value.find((draft) => draft.id === route.query.draft)
+      if (requestedDraft) openDraft(requestedDraft)
     } catch (e) {
       error.value = String(e)
     }

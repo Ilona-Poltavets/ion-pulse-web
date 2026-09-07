@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import MagazineReader from '@/components/journal/MagazineReader.vue'
 import {
   getJournalMaterials,
+  listJournalDrafts,
   listJournalIssues,
   type JournalCandidate,
   type JournalIssue,
@@ -15,6 +16,7 @@ const route = useRoute()
 const auth = useAuthStore()
 const { locale } = useI18n()
 const issues = ref<JournalIssue[]>([])
+const drafts = ref<JournalIssue[]>([])
 const selected = computed(
   () =>
     issues.value.find((i) => i.id === route.params.id) ||
@@ -67,7 +69,10 @@ watch([() => selected.value?.id, locale], async () => {
 })
 onMounted(async () => {
   try {
-    issues.value = await listJournalIssues()
+    if (!auth.user) await auth.restore()
+    const publishedRequest = listJournalIssues()
+    const draftsRequest = canEdit.value ? listJournalDrafts() : Promise.resolve([])
+    ;[issues.value, drafts.value] = await Promise.all([publishedRequest, draftsRequest])
   } catch (e) {
     error.value = String(e)
   } finally {
@@ -92,6 +97,28 @@ onBeforeUnmount(() => {
     </header>
     <p v-if="error" role="alert" class="form-error">{{ error }}</p>
     <p v-if="loading" role="status">Загружаем выпуск…</p>
+    <section v-else-if="canEdit && drafts.length && !reading" class="journal-drafts">
+      <div class="journal-drafts-heading">
+        <div>
+          <p class="eyebrow">РЕДАКЦИЯ</p>
+          <h2>Черновики выпусков</h2>
+        </div>
+        <span>{{ drafts.length }}</span>
+      </div>
+      <div class="journal-draft-list">
+        <RouterLink
+          v-for="draft in drafts"
+          :key="draft.id"
+          :to="{ path: '/journal/candidates', query: { draft: draft.id } }"
+          class="journal-draft-card"
+        >
+          <span>ЧЕРНОВИК</span>
+          <strong>{{ draft.title }}</strong>
+          <small>{{ draft.period_start.slice(0, 7) }} · {{ draft.pages.length }} стр.</small>
+          <b>Продолжить редактирование →</b>
+        </RouterLink>
+      </div>
+    </section>
     <p v-else-if="!selected" class="empty-state">
       {{ route.params.id ? 'Выпуск не найден.' : 'Первый выпуск ещё готовится.' }}
     </p>
@@ -158,6 +185,65 @@ onBeforeUnmount(() => {
   </section>
 </template>
 <style>
+.journal-drafts {
+  margin: 28px 0 42px;
+  padding: 22px;
+  border: 1px solid rgb(197 239 88 / 24%);
+  border-radius: 10px;
+  background: rgb(197 239 88 / 4%);
+}
+.journal-drafts-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+.journal-drafts-heading h2,
+.journal-drafts-heading p {
+  margin: 0;
+}
+.journal-drafts-heading > span {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--lime);
+  color: #11150e;
+  font-weight: 800;
+}
+.journal-draft-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+}
+.journal-draft-card {
+  display: grid;
+  gap: 9px;
+  padding: 18px;
+  border: 1px solid #7775;
+  border-radius: 7px;
+  color: inherit;
+  text-decoration: none;
+  background: var(--surface);
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+.journal-draft-card:hover {
+  border-color: var(--lime);
+  transform: translateY(-2px);
+}
+.journal-draft-card > span,
+.journal-draft-card > b {
+  color: var(--lime);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.journal-draft-card > small {
+  color: #92998c;
+}
 .monthly-shelf {
   display: flex;
   gap: 12px;
