@@ -546,13 +546,13 @@ async function saveDraft(returnToProfile: boolean): Promise<void> {
   max-width: none;
   font-size: clamp(28px, 4vw, 48px);
   line-height: 1.15;
-  color: #20282d;
+  color: var(--text);
   overflow-wrap: anywhere;
 }
 .editor-article-preview .publication-summary {
-  color: #57645c;
+  color: var(--muted);
 }
 .editor-article-preview .publication-card-meta {
-  color: #687760;
+  color: var(--lime);
 }
 </style>

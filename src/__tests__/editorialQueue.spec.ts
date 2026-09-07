@@ -37,7 +37,7 @@ it('enables editorial decisions after the queue has loaded', async () => {
   const wrapper = mount(EditorialQueueView, {
     global: {
       stubs: {
-        PreviewModal: { template: '<div><slot /></div>' },
+        PreviewModal: { template: '<div><slot /><slot name="aside" /></div>' },
         ContentBody: true,
       },
     },

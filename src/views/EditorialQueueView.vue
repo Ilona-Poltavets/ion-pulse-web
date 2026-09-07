@@ -109,14 +109,14 @@ async function decide(
       "
     >
       <div v-if="selectedPublication" class="editorial-review-modal">
-        <div class="editorial-review-copy">
-          <p class="eyebrow">
-            {{ selectedPublication.category_slug }} · {{ selectedPublication.source_locale }}
-          </p>
-          <h1>{{ selectedPublication.title }}</h1>
-          <p class="publication-summary">{{ selectedPublication.summary }}</p>
-          <ContentBody class="publication-body" :body="selectedPublication.body" />
-        </div>
+        <p class="eyebrow">
+          {{ selectedPublication.category_slug }} · {{ selectedPublication.source_locale }}
+        </p>
+        <h1>{{ selectedPublication.title }}</h1>
+        <p class="publication-summary">{{ selectedPublication.summary }}</p>
+        <ContentBody class="publication-body" :body="selectedPublication.body" />
+      </div>
+      <template v-if="selectedPublication" #aside>
         <aside class="editorial-review-controls">
           <p v-if="message" class="form-error" role="alert">{{ message }}</p>
           <label
@@ -164,33 +164,28 @@ async function decide(
             </button>
           </div>
         </aside>
-      </div>
+      </template>
     </PreviewModal>
   </section>
 </template>
 
 <style scoped>
 .editorial-review-modal {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 290px;
-  gap: clamp(24px, 4vw, 48px);
+  width: min(100%, 900px);
+  margin: 0 auto;
 }
-.editorial-review-copy h1 {
+.editorial-review-modal h1 {
   margin: 12px 0 20px;
-  color: #18231c;
+  color: var(--text);
   font-size: clamp(30px, 4vw, 54px);
   line-height: 1.08;
 }
 .editorial-review-controls {
-  position: sticky;
-  top: 0;
-  align-self: start;
   display: grid;
   gap: 18px;
-  padding: 20px;
+  padding: 0;
   color: var(--text);
-  background: var(--surface);
-  border-radius: 10px;
+  background: transparent;
 }
 .editorial-review-controls label,
 .schedule-controls {
@@ -215,13 +210,5 @@ async function decide(
 }
 .editorial-review-controls .editor-actions {
   display: grid;
-}
-@media (max-width: 800px) {
-  .editorial-review-modal {
-    grid-template-columns: 1fr;
-  }
-  .editorial-review-controls {
-    position: static;
-  }
 }
 </style>

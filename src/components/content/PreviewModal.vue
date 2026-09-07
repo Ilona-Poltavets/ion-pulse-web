@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
 const props = defineProps<{ modelValue: boolean; title: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
+const slots = useSlots()
 const dialog = ref<HTMLDialogElement>()
 let previousFocus: HTMLElement | null = null
 let previousOverflow: string | undefined
@@ -60,26 +61,32 @@ onBeforeUnmount(() => {
       @close="onClose"
       @click="backdrop"
     >
-      <header class="content-preview-modal-header">
-        <strong>{{ title }}</strong
-        ><button type="button" autofocus aria-label="Закрыть предпросмотр" @click="close">
-          Закрыть ×
-        </button>
-      </header>
-      <div class="content-preview-modal-body"><slot /></div>
+      <button
+        class="content-preview-modal-close"
+        type="button"
+        autofocus
+        aria-label="Закрыть"
+        @click="close"
+      >
+        ×
+      </button>
+      <div class="content-preview-modal-layout" :class="{ 'has-aside': Boolean(slots.aside) }">
+        <div class="content-preview-modal-body"><slot /></div>
+        <div v-if="slots.aside" class="content-preview-modal-aside"><slot name="aside" /></div>
+      </div>
     </dialog>
   </Teleport>
 </template>
 <style>
 .content-preview-modal {
-  width: min(1120px, calc(100vw - 40px));
+  width: min(1440px, calc(100vw - 40px));
   max-width: none;
   max-height: calc(100dvh - 48px);
   padding: 0;
-  border: 1px solid #d5d9da;
+  border: 1px solid var(--line);
   border-radius: 12px;
-  background: #fff;
-  color: #20282d;
+  background: var(--background);
+  color: var(--text);
   box-shadow: 0 32px 100px #0008;
   overflow: hidden;
 }
@@ -91,45 +98,77 @@ onBeforeUnmount(() => {
   background: #080b13c9;
   backdrop-filter: blur(5px);
 }
-.content-preview-modal-header {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 16px 24px;
-  border-bottom: 1px solid #e2e6e3;
-  background: #f8faf8;
-  font: 14px/1.5 system-ui;
+.content-preview-modal-layout {
+  display: grid;
+  flex: 1;
+  min-height: 0;
 }
-.content-preview-modal-header button {
-  padding: 8px 12px;
-  border: 1px solid #cad3cb;
-  border-radius: 5px;
+.content-preview-modal-layout.has-aside {
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+.content-preview-modal-close {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  right: 16px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  padding: 0 0 3px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
   cursor: pointer;
-  background: #fff;
-  color: #283a2d;
-  font: inherit;
+  background: rgb(23 25 37 / 92%);
+  color: var(--text);
+  font: 26px/1 system-ui;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
 }
-.content-preview-modal-header button:focus-visible {
-  outline: 2px solid #719044;
+.content-preview-modal-close:hover {
+  color: var(--lime);
+  border-color: rgb(199 255 94 / 55%);
+  transform: rotate(6deg);
+}
+.content-preview-modal-close:focus-visible {
+  outline: 2px solid var(--lime);
   outline-offset: 2px;
 }
 .content-preview-modal-body {
   overflow: auto;
   overscroll-behavior: contain;
-  padding: clamp(20px, 4vw, 56px);
+  padding: clamp(56px, 5vw, 76px) clamp(20px, 4vw, 64px);
   min-height: 0;
   font-size: 17px;
   line-height: 1.8;
+}
+.content-preview-modal-aside {
+  min-width: 0;
+  padding: 68px 20px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
 }
 @media (max-width: 600px) {
   .content-preview-modal {
     width: calc(100vw - 16px);
     max-height: calc(100dvh - 16px);
   }
-  .content-preview-modal-header {
-    padding: 12px 16px;
+  .content-preview-modal-layout.has-aside {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .content-preview-modal-layout.has-aside .content-preview-modal-body,
+  .content-preview-modal-layout.has-aside .content-preview-modal-aside {
+    overflow: visible;
+  }
+  .content-preview-modal-aside {
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    border-left: 0;
   }
 }
 </style>
