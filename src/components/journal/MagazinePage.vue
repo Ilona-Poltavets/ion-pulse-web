@@ -288,8 +288,8 @@ onBeforeUnmount(() => {
   cursor: grabbing;
   outline-color: var(--ink-accent);
 }
-.magazine-layout-block h2,
-.magazine-layout-block p {
+.magazine-layout-block.block-heading > h2,
+.magazine-layout-block.block-deck > p {
   margin: 0;
   font: inherit;
 }
