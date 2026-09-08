@@ -468,14 +468,8 @@ function openDraft(draft: JournalIssue) {
 async function save() {
   error.value = ''
   message.value = ''
-  if (
-    title.value.length < 5 ||
-    !pages.value.length ||
-    pages.value.some(
-      (p) => !['cover', 'title', 'finale'].includes(p.template) && !p.publication_ids.length,
-    )
-  ) {
-    error.value = 'Укажите название и добавьте материал на каждую внутреннюю страницу.'
+  if (title.value.length < 5) {
+    error.value = 'Название выпуска должно содержать минимум 5 символов.'
     return
   }
   busy.value = true
