@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
             @pointercancel="endBlockDrag"
           >
             <img v-if="block.id === 'image' && page.image_url" :src="page.image_url" alt="" />
-            <h2 v-else-if="block.id === 'heading' && !page.continuation">
+            <h2 v-else-if="block.id === 'heading' && (!page.continuation || page.heading)">
               {{ page.heading || primaryStory?.title }}
             </h2>
             <p v-else-if="block.id === 'deck' && !page.continuation">{{ primaryStory?.summary }}</p>
@@ -185,9 +185,7 @@ onBeforeUnmount(() => {
             :src="page.image_url"
             alt=""
           />
-          <h2 v-if="page.heading && !page.continuation" class="magazine-heading">
-            {{ page.heading }}
-          </h2>
+          <h2 v-if="page.heading" class="magazine-heading">{{ page.heading }}</h2>
           <ol v-if="page.template === 'contents'" class="magazine-contents-list">
             <li v-for="(story, index) in stories" :key="story.id">
               <b>{{ String(number + index + 1).padStart(2, '0') }}</b>

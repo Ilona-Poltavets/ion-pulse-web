@@ -283,10 +283,10 @@ function paginatePage(current: JournalPage) {
     return
   }
   current.text = chunks.shift() || ''
-  const continuationPages = chunks.map((text, index) =>
+  const continuationPages = chunks.map((text) =>
     normalizePage({
       ...current,
-      heading: `${current.heading || 'Продолжение'}${index ? ` · ${index + 2}` : ' · продолжение'}`,
+      heading: '',
       text,
       image_url: '',
       image_position: 'full',
