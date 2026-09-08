@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import MagazineReader from '@/components/journal/MagazineReader.vue'
 import {
   getJournalMaterials,
+  getJournalIssue,
   listJournalDrafts,
   listJournalIssues,
   type JournalCandidate,
@@ -71,8 +72,18 @@ onMounted(async () => {
   try {
     if (!auth.user) await auth.restore()
     const publishedRequest = listJournalIssues()
+    const selectedRequest =
+      typeof route.params.id === 'string' ? getJournalIssue(route.params.id) : Promise.resolve(null)
     const draftsRequest = canEdit.value ? listJournalDrafts() : Promise.resolve([])
-    ;[issues.value, drafts.value] = await Promise.all([publishedRequest, draftsRequest])
+    const [published, savedDrafts, current] = await Promise.all([
+      publishedRequest,
+      draftsRequest,
+      selectedRequest,
+    ])
+    issues.value = current
+      ? [current, ...published.filter((issue) => issue.id !== current.id)]
+      : published
+    drafts.value = savedDrafts
   } catch (e) {
     error.value = String(e)
   } finally {

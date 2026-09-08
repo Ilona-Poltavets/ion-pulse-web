@@ -540,7 +540,10 @@ export function publishJournalIssue(id: string): Promise<JournalIssue> {
   return request(`/journal/issues/${id}/publish`, { method: 'POST' })
 }
 export function listJournalIssues(): Promise<JournalIssue[]> {
-  return request('/journal/issues')
+  return request('/journal/issues', { cache: 'no-store' })
+}
+export function getJournalIssue(id: string): Promise<JournalIssue> {
+  return request(`/journal/issues/${id}`, { cache: 'no-store' })
 }
 export function listJournalIssuePublications(
   id: string,
@@ -733,5 +736,5 @@ export function saveJournalIssue(
   })
 }
 export function getJournalMaterials(id: string, locale: string): Promise<JournalCandidate[]> {
-  return request(`/journal/issues/${id}/materials?locale=${locale}`)
+  return request(`/journal/issues/${id}/materials?locale=${locale}`, { cache: 'no-store' })
 }

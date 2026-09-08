@@ -201,8 +201,8 @@ watch(
 <style>
 .page-layout-canvas {
   width: min(660px, 100%);
-  height: min(850px, calc(100dvh - 150px));
-  min-height: 560px;
+  aspect-ratio: 66 / 85;
+  max-height: calc(100dvh - 150px);
   margin: 0 auto;
   box-shadow: 0 18px 70px #0008;
 }

@@ -328,7 +328,8 @@ onBeforeUnmount(() => {
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  height: 780px;
+  aspect-ratio: 132 / 85;
+  height: auto;
   max-width: 1200px;
   margin: auto;
   isolation: isolate;
@@ -448,7 +449,7 @@ onBeforeUnmount(() => {
 }
 .curl-book.is-single {
   grid-template-columns: 1fr;
-  height: 720px;
+  aspect-ratio: 66 / 85;
   overflow: hidden;
 }
 .is-single .curl-sheet {
@@ -463,7 +464,7 @@ onBeforeUnmount(() => {
     line-height: 1.6;
   }
   .curl-book {
-    height: 720px;
+    height: auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {
