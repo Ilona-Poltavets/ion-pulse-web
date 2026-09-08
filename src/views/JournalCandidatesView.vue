@@ -291,6 +291,19 @@ function paginatePage(current: JournalPage) {
       image_url: '',
       image_position: 'full',
       continuation: true,
+      layout_blocks: current.layout_blocks?.some((block) => block.id === 'body')
+        ? [
+            {
+              id: 'body',
+              x: 3,
+              y: 3,
+              width: 94,
+              height: 94,
+              font_size:
+                current.layout_blocks.find((block) => block.id === 'body')?.font_size ?? 14,
+            },
+          ]
+        : [],
     }),
   )
   pages.value.splice(currentIndex + 1, 0, ...continuationPages)
