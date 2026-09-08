@@ -135,6 +135,217 @@ a {
   transform: translateY(-1px);
 }
 
+.roulette-page {
+  min-height: calc(100vh - var(--header-height));
+  padding: clamp(3rem, 6vw, 6rem) 0;
+}
+
+.roulette-heading {
+  max-width: 920px;
+  margin-bottom: clamp(2rem, 5vw, 4rem);
+}
+
+.roulette-heading h1 {
+  max-width: 900px;
+  margin: 0.35rem 0 0.8rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(3rem, 7vw, 7rem);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+}
+
+.roulette-heading > p:last-child,
+.roulette-note {
+  color: var(--muted);
+}
+
+.roulette-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(500px, 1.28fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  align-items: center;
+}
+
+.roulette-controls {
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+}
+
+.roulette-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.roulette-tabs button {
+  padding: 0.72rem 1rem;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.roulette-tabs button.active {
+  color: #10111a;
+  background: var(--lime);
+  border-color: var(--lime);
+}
+
+.roulette-tabs button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.roulette-count {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.roulette-count input {
+  width: 100%;
+  accent-color: var(--lime);
+}
+
+.roulette-catalog {
+  display: grid;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.roulette-catalog label {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.roulette-catalog input {
+  accent-color: var(--lime);
+}
+
+.roulette-result {
+  padding: 1.4rem;
+  background: linear-gradient(145deg, rgb(199 255 94 / 11%), var(--surface));
+  border: 1px solid rgb(199 255 94 / 35%);
+  border-radius: 14px;
+}
+
+.roulette-result h2 {
+  margin: 0.35rem 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.7rem, 3vw, 2.7rem);
+  line-height: 1;
+}
+
+.roulette-result a {
+  display: inline-block;
+  margin-top: 0.65rem;
+  color: var(--lime);
+}
+
+.roulette-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(70vw, 720px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+
+.roulette-wheel {
+  position: absolute;
+  inset: 2%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle, var(--surface) 0 19%, transparent 20%),
+    repeating-conic-gradient(
+      from -8deg,
+      rgb(199 255 94 / 16%) 0 22.5deg,
+      rgb(166 139 255 / 14%) 22.5deg 45deg
+    );
+  border: 7px solid var(--surface-raised);
+  border-radius: 50%;
+  box-shadow: 0 32px 90px rgb(0 0 0 / 44%);
+  transition: transform 1.5s cubic-bezier(0.12, 0.72, 0.12, 1);
+}
+
+.roulette-game {
+  position: absolute;
+  top: 50%;
+  left: calc(50% - 48px);
+  display: grid;
+  width: 96px;
+  height: 46%;
+  justify-items: center;
+  align-content: start;
+  transform-origin: 50% 100%;
+}
+
+.roulette-game img {
+  width: clamp(48px, 7vw, 82px);
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  background: var(--surface-raised);
+  border: 2px solid rgb(255 255 255 / 60%);
+  border-radius: 7px;
+}
+
+.roulette-game span {
+  width: 120px;
+  margin-top: 0.35rem;
+  overflow: hidden;
+  color: var(--text);
+  font-size: clamp(0.55rem, 1vw, 0.72rem);
+  font-weight: 700;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roulette-pointer {
+  position: absolute;
+  top: -1%;
+  z-index: 3;
+  width: 0;
+  height: 0;
+  border-top: 30px solid var(--lime);
+  border-right: 18px solid transparent;
+  border-left: 18px solid transparent;
+  filter: drop-shadow(0 5px 8px rgb(0 0 0 / 50%));
+}
+
+.roulette-spin {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 22%;
+  aspect-ratio: 1;
+  padding: 0.5rem;
+  color: #10111a;
+  background: var(--lime);
+  border: 8px solid var(--surface-raised);
+  border-radius: 50%;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.roulette-spin:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .locale-switcher {
   position: relative;
 }
@@ -2164,6 +2375,14 @@ h1 em {
 }
 
 @media (max-width: 900px) {
+  .roulette-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .roulette-stage {
+    width: min(92vw, 620px);
+  }
+
   .site-header__inner {
     grid-template-columns: 1fr auto;
   }

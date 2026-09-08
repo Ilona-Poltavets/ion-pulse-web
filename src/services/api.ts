@@ -168,6 +168,11 @@ export interface Game {
   id: string
   slug: string
   title: string
+  steam_app_id: number | null
+  genre: string
+  poster_url: string
+  fallback_poster_url: string
+  store_url: string
 }
 export interface Category {
   slug: string
@@ -581,6 +586,9 @@ export function setPublicationRating(
 }
 export function listGames(): Promise<Game[]> {
   return request('/subscriptions/games/catalog')
+}
+export function getRouletteGames(count = 8): Promise<{ games: Game[] }> {
+  return request(`/subscriptions/games/roulette?count=${count}`)
 }
 export function listGameSubscriptions(): Promise<GameSubscription[]> {
   return request('/subscriptions/games')
