@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { contentImageUrls } from '@/components/content/contentFormat'
 import type { JournalCandidate, JournalPage } from '@/services/api'
 import MagazinePage from './MagazinePage.vue'
+import { journalImageUrl } from './journalImage'
 import { pageCurl } from './pageCurl'
 import {
   canTurnReader,
@@ -180,10 +180,7 @@ watch(
 watch(
   [() => props.pages, () => props.materials],
   () => {
-    const urls = new Set([
-      ...props.pages.map((page) => page.image_url).filter(Boolean),
-      ...props.materials.flatMap((material) => contentImageUrls(material.body)),
-    ])
+    const urls = new Set(props.pages.map((page) => journalImageUrl(page.image_url)).filter(Boolean))
     for (const url of urls) {
       if (imagePreloads.has(url)) continue
       const preload = new Image()
@@ -350,7 +347,7 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr 1fr;
   aspect-ratio: 132 / 85;
   height: auto;
-  max-width: 1200px;
+  max-width: 1320px;
   margin: auto;
   isolation: isolate;
   box-shadow:

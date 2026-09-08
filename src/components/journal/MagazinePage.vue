@@ -2,6 +2,7 @@
 import ContentBody from '@/components/content/ContentBody.vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import type { JournalCandidate, JournalLayoutBlock, JournalPage } from '@/services/api'
+import { journalImageUrl } from './journalImage'
 const props = defineProps<{
   page: JournalPage
   materials: JournalCandidate[]
@@ -28,6 +29,7 @@ const standalone = computed(
 )
 const customLayout = computed(() => !standalone.value && Boolean(props.page.layout_blocks?.length))
 const primaryStory = computed(() => stories.value[0])
+const pageImageUrl = computed(() => journalImageUrl(props.page.image_url))
 const photoStyle = computed(() => ({
   width: `${props.page.image_width ?? 100}%`,
   height: `${props.page.image_height ?? 38}%`,
@@ -124,7 +126,7 @@ onBeforeUnmount(() => {
       <img
         v-if="page.image_url"
         class="magazine-cover-photo"
-        :src="page.image_url"
+        :src="pageImageUrl"
         alt=""
         loading="eager"
         decoding="async"
@@ -175,7 +177,7 @@ onBeforeUnmount(() => {
           >
             <img
               v-if="block.id === 'image' && page.image_url"
-              :src="page.image_url"
+              :src="pageImageUrl"
               alt=""
               loading="eager"
               decoding="async"
@@ -197,7 +199,7 @@ onBeforeUnmount(() => {
             v-if="page.image_url"
             class="magazine-photo"
             :style="photoStyle"
-            :src="page.image_url"
+            :src="pageImageUrl"
             alt=""
             loading="eager"
             decoding="async"

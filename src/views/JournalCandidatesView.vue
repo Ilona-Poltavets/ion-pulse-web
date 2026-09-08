@@ -317,19 +317,6 @@ function paginatePage(current: JournalPage) {
 function paginateText() {
   if (page.value) paginatePage(page.value)
 }
-function paginateAllPages(): void {
-  let index = 0
-  while (index < pages.value.length) {
-    const target = pages.value[index]
-    if (!target || target.continuation) {
-      index += 1
-      continue
-    }
-    paginatePage(target)
-    index += 1
-    while (pages.value[index]?.continuation) index += 1
-  }
-}
 function hydratePage(target: JournalPage, publicationId: string): void {
   const publication = candidates.value.find((item) => item.id === publicationId)
   if (!publication) return
@@ -466,7 +453,6 @@ function openDraft(draft: JournalIssue) {
     if (!target.continuation && !target.image_url && publication)
       target.image_url = contentFirstImage(publication.body)
   }
-  paginateAllPages()
   selectPage(0)
   published.value = draft.status === 'published'
 }
