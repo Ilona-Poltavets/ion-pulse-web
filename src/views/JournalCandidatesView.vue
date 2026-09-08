@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import MagazinePage from '@/components/journal/MagazinePage.vue'
 import { contentText } from '@/components/content/contentFormat'
+import { balancedTextChunks } from '@/components/journal/textPagination'
 import {
   createJournalIssue,
   listJournalCandidates,
@@ -232,37 +233,53 @@ function normalizePage(value: JournalPage): JournalPage {
   }
 }
 
-function splitText(value: string, firstLimit: number, continuationLimit = firstLimit): string[] {
-  const words = value.trim().split(/\s+/)
-  const chunks: string[] = []
-  let chunk = ''
-  for (const word of words) {
-    const limit = chunks.length ? continuationLimit : firstLimit
-    if (chunk && `${chunk} ${word}`.length > limit) {
-      chunks.push(chunk)
-      chunk = word
-    } else chunk = chunk ? `${chunk} ${word}` : word
-  }
-  if (chunk) chunks.push(chunk)
-  return chunks
+function sameFlow(first: JournalPage, second: JournalPage): boolean {
+  return (
+    first.template === second.template &&
+    first.publication_ids.join(',') === second.publication_ids.join(',')
+  )
 }
 
 function paginatePage(current: JournalPage) {
-  const currentIndex = pages.value.indexOf(current)
+  let currentIndex = pages.value.indexOf(current)
   if (currentIndex < 0) return
+
+  while (
+    current.continuation &&
+    currentIndex > 0 &&
+    sameFlow(pages.value[currentIndex - 1]!, current)
+  ) {
+    current = pages.value[--currentIndex]!
+  }
+
+  const flowText = [current.text]
+  let continuationIndex = currentIndex + 1
+  while (
+    pages.value[continuationIndex]?.continuation &&
+    sameFlow(current, pages.value[continuationIndex]!)
+  ) {
+    flowText.push(pages.value[continuationIndex]!.text)
+    continuationIndex += 1
+  }
+  pages.value.splice(currentIndex + 1, continuationIndex - currentIndex - 1)
+  current.continuation = false
+  current.text = flowText.join(' ').trim()
+  active.value = currentIndex
+
   const standaloneTemplate = ['cover', 'title', 'finale'].includes(current.template)
   const continuationLimit = current.template === 'columns' ? 2200 : 1800
-  const firstLimit = current.continuation
-    ? continuationLimit
-    : standaloneTemplate
-      ? 450
-      : current.image_url
-        ? 700
-        : current.one_post_per_page
-          ? 1100
-          : 1400
-  const chunks = splitText(current.text, firstLimit, continuationLimit)
-  if (chunks.length < 2) return
+  const firstLimit = standaloneTemplate
+    ? 450
+    : current.image_url
+      ? 700
+      : current.one_post_per_page
+        ? 1100
+        : 1400
+  const chunks = balancedTextChunks(current.text, firstLimit, continuationLimit)
+  if (chunks.length < 2) {
+    message.value = 'Текст помещается на одной странице.'
+    return
+  }
   current.text = chunks.shift() || ''
   const continuationPages = chunks.map((text, index) =>
     normalizePage({
@@ -275,10 +292,23 @@ function paginatePage(current: JournalPage) {
     }),
   )
   pages.value.splice(currentIndex + 1, 0, ...continuationPages)
-  message.value = `Текст перенесён на ${continuationPages.length} стр. продолжения.`
+  message.value = `Страницы сбалансированы: ${continuationPages.length + 1} стр.`
 }
 function paginateText() {
   if (page.value) paginatePage(page.value)
+}
+function paginateAllPages(): void {
+  let index = 0
+  while (index < pages.value.length) {
+    const target = pages.value[index]
+    if (!target || target.continuation) {
+      index += 1
+      continue
+    }
+    paginatePage(target)
+    index += 1
+    while (pages.value[index]?.continuation) index += 1
+  }
 }
 function hydratePage(target: JournalPage, publicationId: string): void {
   const publication = candidates.value.find((item) => item.id === publicationId)
@@ -376,8 +406,9 @@ function openDraft(draft: JournalIssue) {
   title.value = draft.title
   month.value = draft.period_start.slice(0, 7)
   pages.value = (JSON.parse(JSON.stringify(draft.pages)) as JournalPage[]).map(normalizePage)
-  selectPage(0)
   saved.value = fingerprint.value
+  paginateAllPages()
+  selectPage(0)
   published.value = false
 }
 async function save() {
@@ -584,6 +615,14 @@ async function publish() {
                   @blur="paginateText"
                 />
               </label>
+              <button
+                v-if="page.text.trim()"
+                class="button secondary balance-pages"
+                type="button"
+                @click="paginateText"
+              >
+                Сбалансировать страницы
+              </button>
               <h3 v-if="!standalonePage">Материалы за два месяца</h3>
               <template v-if="!standalonePage">
                 <label class="checkbox-label magazine-flow-option">
@@ -919,6 +958,10 @@ async function publish() {
   color: #a6ad9f;
   font-size: 12px;
   line-height: 1.4;
+}
+.balance-pages {
+  width: 100%;
+  margin: 0 0 16px;
 }
 @media (max-width: 900px) {
   .magazine-template-picker {
