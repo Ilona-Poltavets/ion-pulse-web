@@ -25,4 +25,12 @@ describe('balancedTextChunks', () => {
     expect(last.length).toBeGreaterThan(first.length)
     expect(last.length).toBeGreaterThan(600)
   })
+
+  it('preserves paragraph and quote boundaries', () => {
+    const text = `Первый абзац ${'текст '.repeat(20).trim()}\n\n> Важная цитата автора\n\nПоследний абзац ${'слово '.repeat(20).trim()}`
+    const chunks = balancedTextChunks(text, 120, 180)
+
+    expect(chunks.join('\n\n').replace(/\s+/g, ' ').trim()).toBe(text.replace(/\s+/g, ' ').trim())
+    expect(chunks.join('\n\n')).toContain('\n\n> Важная цитата автора\n\n')
+  })
 })

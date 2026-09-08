@@ -263,7 +263,7 @@ function paginatePage(current: JournalPage) {
   }
   pages.value.splice(currentIndex + 1, continuationIndex - currentIndex - 1)
   current.continuation = false
-  current.text = flowText.join(' ').trim()
+  current.text = flowText.join('\n\n').trim()
   active.value = currentIndex
 
   const standaloneTemplate = ['cover', 'title', 'finale'].includes(current.template)
@@ -315,6 +315,27 @@ function hydratePage(target: JournalPage, publicationId: string): void {
   if (!publication) return
   target.text = contentText(publication.body)
   if (!target.image_url) target.image_url = contentFirstImage(publication.body)
+  requestAnimationFrame(() => paginatePage(target))
+}
+function refreshPageFromPublication(target: JournalPage): void {
+  let targetIndex = pages.value.indexOf(target)
+  while (
+    target.continuation &&
+    targetIndex > 0 &&
+    sameFlow(pages.value[targetIndex - 1]!, target)
+  ) {
+    target = pages.value[--targetIndex]!
+  }
+  const publication = candidates.value.find((item) => item.id === target.publication_ids[0])
+  if (!publication) return
+  while (
+    pages.value[targetIndex + 1]?.continuation &&
+    sameFlow(target, pages.value[targetIndex + 1]!)
+  )
+    pages.value.splice(targetIndex + 1, 1)
+  target.text = contentText(publication.body)
+  if (!target.image_url) target.image_url = contentFirstImage(publication.body)
+  active.value = targetIndex
   requestAnimationFrame(() => paginatePage(target))
 }
 function toggleMaterial(target: JournalPage, publicationId: string, selected: boolean): void {
@@ -618,14 +639,20 @@ async function publish() {
                   @blur="paginateText"
                 />
               </label>
-              <button
-                v-if="page.text.trim()"
-                class="button secondary balance-pages"
-                type="button"
-                @click="paginateText"
-              >
-                Сбалансировать страницы
-              </button>
+              <div v-if="page.text.trim()" class="page-text-actions">
+                <button class="button secondary" type="button" @click="paginateText">
+                  Сбалансировать страницы
+                </button>
+                <button
+                  v-if="page.publication_ids.length === 1"
+                  class="button secondary"
+                  type="button"
+                  title="Заменить редакторский текст актуальным содержимым исходной статьи"
+                  @click="refreshPageFromPublication(page)"
+                >
+                  Обновить из статьи
+                </button>
+              </div>
               <h3 v-if="!standalonePage">Материалы за два месяца</h3>
               <template v-if="!standalonePage">
                 <label class="checkbox-label magazine-flow-option">
@@ -962,9 +989,14 @@ async function publish() {
   font-size: 12px;
   line-height: 1.4;
 }
-.balance-pages {
-  width: 100%;
+.page-text-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   margin: 0 0 16px;
+}
+.page-text-actions .button {
+  padding-inline: 8px;
 }
 @media (max-width: 900px) {
   .magazine-template-picker {

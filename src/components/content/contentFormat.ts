@@ -63,9 +63,12 @@ export function contentHtml(body: string): string {
   return body
     .split(/\n\s*\n/)
     .map((text) => {
-      const paragraph = document.createElement('p')
-      paragraph.textContent = text
-      return paragraph.outerHTML.replace(/\n/g, '<br>')
+      const trimmed = text.trim()
+      const element = document.createElement(
+        trimmed.startsWith('> ') ? 'blockquote' : /^#{2,4}\s/.test(trimmed) ? 'h2' : 'p',
+      )
+      element.textContent = trimmed.replace(/^(?:> |#{2,4}\s)/, '')
+      return element.outerHTML.replace(/\n/g, '<br>')
     })
     .join('')
 }
@@ -79,8 +82,18 @@ export function contentText(body: string): string {
   if (!body.startsWith(BLOCK_MARKER)) return body
   const element = document.createElement('div')
   element.innerHTML = contentHtml(body)
-  element.querySelectorAll('p,h2,h3,h4,li,blockquote,pre,br').forEach((node) => node.append(' '))
-  return element.textContent || ''
+  return Array.from(element.children)
+    .flatMap((node) => {
+      if (node.tagName === 'BLOCKQUOTE') return [`> ${node.textContent?.trim() || ''}`]
+      if (/^H[2-4]$/.test(node.tagName)) return [`## ${node.textContent?.trim() || ''}`]
+      if (node.tagName === 'UL' || node.tagName === 'OL')
+        return Array.from(node.querySelectorAll(':scope > li')).map(
+          (item) => `• ${item.textContent?.trim() || ''}`,
+        )
+      return node.tagName === 'IMG' || node.tagName === 'HR' ? [] : [node.textContent?.trim() || '']
+    })
+    .filter(Boolean)
+    .join('\n\n')
 }
 
 export function contentFirstImage(body: string): string {

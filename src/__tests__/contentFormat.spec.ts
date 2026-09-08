@@ -20,8 +20,20 @@ describe('shared editor and publication content', () => {
     const html =
       '<h2 data-align="center">Heading</h2><p><strong>Bold</strong> and <em>italic</em></p><ul><li><p>One</p></li></ul><img src="https://example.com/a.png" alt="A landscape">'
     expect(contentHtml(serializeContent(html))).toBe(html)
-    expect(contentText(serializeContent(html))).toMatch(/Heading\s+Bold and italic\s+One/)
+    expect(contentText(serializeContent(html))).toMatch(/Heading\s+Bold and italic\s+• One/)
     expect(contentFirstImage(serializeContent(html))).toBe('https://example.com/a.png')
+  })
+  it('keeps quotes and headings when content is prepared for a journal', () => {
+    const text = contentText(
+      serializeContent(
+        '<h2>Важная тема</h2><p>Вводный абзац</p><blockquote>Два года работы — это нереально</blockquote><p>Продолжение</p>',
+      ),
+    )
+
+    expect(text).toBe(
+      '## Важная тема\n\nВводный абзац\n\n> Два года работы — это нереально\n\nПродолжение',
+    )
+    expect(contentHtml(text)).toContain('<blockquote>Два года работы — это нереально</blockquote>')
   })
   it('removes executable markup even in marked content from the API', () => {
     const html = contentHtml(

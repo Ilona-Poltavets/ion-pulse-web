@@ -11,6 +11,7 @@ function takeClosestChunk(words: string[], target: number): string {
     const nextLength = length + (chunk.length ? 1 : 0) + word.length
     if (
       chunk.length &&
+      chunk[chunk.length - 1] !== PARAGRAPH_BREAK &&
       nextLength > target &&
       Math.abs(target - length) <= Math.abs(nextLength - target)
     )
@@ -19,7 +20,13 @@ function takeClosestChunk(words: string[], target: number): string {
     length = nextLength
   }
 
-  return chunk.join(' ')
+  return restoreParagraphs(chunk.join(' '))
+}
+
+const PARAGRAPH_BREAK = '\uE000'
+
+function restoreParagraphs(value: string): string {
+  return value.replace(new RegExp(`\\s*${PARAGRAPH_BREAK}\\s*`, 'g'), '\n\n').trim()
 }
 
 /** Splits copy into the fewest pages and gives every page a similar fill ratio. */
@@ -28,11 +35,15 @@ export function balancedTextChunks(
   firstPageCapacity: number,
   continuationCapacity = firstPageCapacity,
 ): string[] {
-  const words = value.trim().split(/\s+/).filter(Boolean)
+  const words = value
+    .trim()
+    .replace(/\n\s*\n/g, ` ${PARAGRAPH_BREAK} `)
+    .split(/\s+/)
+    .filter(Boolean)
   if (!words.length) return []
 
   const total = textLength(words)
-  if (total <= firstPageCapacity) return [words.join(' ')]
+  if (total <= firstPageCapacity) return [restoreParagraphs(words.join(' '))]
 
   const continuationCount = Math.ceil(Math.max(0, total - firstPageCapacity) / continuationCapacity)
   const capacities = [
@@ -50,7 +61,7 @@ export function balancedTextChunks(
     )
     chunks.push(takeClosestChunk(words, target))
   }
-  if (words.length) chunks.push(words.join(' '))
+  if (words.length) chunks.push(restoreParagraphs(words.join(' ')))
 
   return chunks.filter(Boolean)
 }
