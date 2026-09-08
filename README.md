@@ -18,6 +18,25 @@ npm run dev
 The application is available at `http://localhost:5173` and expects the API at
 `http://localhost:8000` by default.
 
+### Keenetic development access
+
+For the Keenetic remote-access rule that forwards
+`games-service.ion-pulse.keenetic.pro` to this computer on TCP port `3030`, run:
+
+```bash
+npm run dev:keenetic
+```
+
+This starts a dedicated API on loopback port `8030` and Vite on `0.0.0.0:3030`.
+Vite proxies `/api` and `/uploads` to the API, so sessions, uploaded images, and the
+Steam OpenID callback use the public Keenetic origin instead of browser-local
+`localhost`. Override the defaults when needed:
+
+```bash
+ION_PULSE_KEENETIC_ORIGIN=http://another-name.keenetic.pro \
+ION_PULSE_KEENETIC_API_PORT=8031 npm run dev:keenetic
+```
+
 ## Production deployment
 
 Build the SPA without `VITE_API_URL`; the production bundle then uses the current origin and
