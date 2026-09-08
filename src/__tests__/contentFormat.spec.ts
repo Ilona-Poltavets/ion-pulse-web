@@ -3,6 +3,7 @@ import {
   BLOCK_MARKER,
   contentFirstImage,
   contentHtml,
+  contentImageUrls,
   contentText,
   serializeContent,
 } from '@/components/content/contentFormat'
@@ -22,6 +23,11 @@ describe('shared editor and publication content', () => {
     expect(contentHtml(serializeContent(html))).toBe(html)
     expect(contentText(serializeContent(html))).toMatch(/Heading\s+Bold and italic\s+• One/)
     expect(contentFirstImage(serializeContent(html))).toBe('https://example.com/a.png')
+    expect(
+      contentImageUrls(
+        serializeContent(html + '<img src="https://example.com/b.png" alt="Second landscape">'),
+      ),
+    ).toEqual(['https://example.com/a.png', 'https://example.com/b.png'])
   })
   it('keeps quotes and headings when content is prepared for a journal', () => {
     const text = contentText(

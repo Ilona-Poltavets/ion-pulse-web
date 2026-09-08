@@ -121,7 +121,15 @@ onBeforeUnmount(() => {
     :style="{ '--ink-accent': page.accent }"
   >
     <template v-if="standalone">
-      <img v-if="page.image_url" class="magazine-cover-photo" :src="page.image_url" alt="" />
+      <img
+        v-if="page.image_url"
+        class="magazine-cover-photo"
+        :src="page.image_url"
+        alt=""
+        loading="eager"
+        decoding="async"
+        fetchpriority="high"
+      />
       <div class="magazine-cover-shade"></div>
       <div class="magazine-cover-brand">
         {{ page.template === 'title' ? 'ION / PULSE — TITLE PAGE' : 'ION / PULSE' }}
@@ -165,7 +173,14 @@ onBeforeUnmount(() => {
             @pointerup="endBlockDrag"
             @pointercancel="endBlockDrag"
           >
-            <img v-if="block.id === 'image' && page.image_url" :src="page.image_url" alt="" />
+            <img
+              v-if="block.id === 'image' && page.image_url"
+              :src="page.image_url"
+              alt=""
+              loading="eager"
+              decoding="async"
+              fetchpriority="high"
+            />
             <h2 v-else-if="block.id === 'heading' && (!page.continuation || page.heading)">
               {{ page.heading || primaryStory?.title }}
             </h2>
@@ -184,6 +199,9 @@ onBeforeUnmount(() => {
             :style="photoStyle"
             :src="page.image_url"
             alt=""
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
           />
           <h2 v-if="page.heading" class="magazine-heading">{{ page.heading }}</h2>
           <ol v-if="page.template === 'contents'" class="magazine-contents-list">

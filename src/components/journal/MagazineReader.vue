@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { contentImageUrls } from '@/components/content/contentFormat'
 import type { JournalCandidate, JournalPage } from '@/services/api'
 import MagazinePage from './MagazinePage.vue'
 import { pageCurl } from './pageCurl'
@@ -55,6 +56,7 @@ let observer: ResizeObserver | undefined
 let reducedMotion: MediaQueryList | undefined
 let suppressClick = false
 let gesture: { id: number; x: number; y: number; time: number; started: boolean } | undefined
+const imagePreloads = new Map<string, HTMLImageElement>()
 const sheetStyle = computed(() => ({
   width: `${pageWidth.value}px`,
   height: `${height.value}px`,
@@ -175,6 +177,23 @@ watch(
     index.value = 0
   },
 )
+watch(
+  [() => props.pages, () => props.materials],
+  () => {
+    const urls = new Set([
+      ...props.pages.map((page) => page.image_url).filter(Boolean),
+      ...props.materials.flatMap((material) => contentImageUrls(material.body)),
+    ])
+    for (const url of urls) {
+      if (imagePreloads.has(url)) continue
+      const preload = new Image()
+      preload.decoding = 'async'
+      preload.src = url
+      imagePreloads.set(url, preload)
+    }
+  },
+  { immediate: true },
+)
 onMounted(() => {
   reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
   window.addEventListener('keydown', key)
@@ -195,6 +214,7 @@ onBeforeUnmount(() => {
   reset()
   observer?.disconnect()
   window.removeEventListener('keydown', key)
+  imagePreloads.clear()
 })
 </script>
 

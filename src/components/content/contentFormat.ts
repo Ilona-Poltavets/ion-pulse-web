@@ -102,3 +102,12 @@ export function contentFirstImage(body: string): string {
   element.innerHTML = contentHtml(body)
   return element.querySelector('img')?.getAttribute('src') || ''
 }
+
+export function contentImageUrls(body: string): string[] {
+  if (!body.startsWith(BLOCK_MARKER)) return []
+  const element = document.createElement('div')
+  element.innerHTML = contentHtml(body)
+  return Array.from(element.querySelectorAll('img'))
+    .map((image) => image.getAttribute('src') || '')
+    .filter(Boolean)
+}
