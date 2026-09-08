@@ -374,7 +374,7 @@ onBeforeUnmount(() => {
 .curl-book > .curl-cover-page {
   grid-column: 1 / -1;
   width: 50%;
-  justify-self: center;
+  justify-self: end;
   box-shadow: 0 25px 50px #0008;
 }
 .curl-end {
