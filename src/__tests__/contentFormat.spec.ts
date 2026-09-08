@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   BLOCK_MARKER,
+  contentFirstImage,
   contentHtml,
   contentText,
   serializeContent,
@@ -20,6 +21,7 @@ describe('shared editor and publication content', () => {
       '<h2 data-align="center">Heading</h2><p><strong>Bold</strong> and <em>italic</em></p><ul><li><p>One</p></li></ul><img src="https://example.com/a.png" alt="A landscape">'
     expect(contentHtml(serializeContent(html))).toBe(html)
     expect(contentText(serializeContent(html))).toMatch(/Heading\s+Bold and italic\s+One/)
+    expect(contentFirstImage(serializeContent(html))).toBe('https://example.com/a.png')
   })
   it('removes executable markup even in marked content from the API', () => {
     const html = contentHtml(
@@ -36,6 +38,11 @@ describe('shared editor and publication content', () => {
           '<img src="data:image/svg+xml,test"><img src="//evil.example/x"><img src="/media/good.png" alt="Good">',
       ),
     ).toBe('<img src="/media/good.png" alt="Good">')
+    expect(
+      contentFirstImage(
+        BLOCK_MARKER + '<img src="javascript:alert(1)"><img src="/media/good.png" alt="Good">',
+      ),
+    ).toBe('/media/good.png')
   })
   it('keeps an empty editor empty so journals can use the original article', () => {
     expect(serializeContent('<p></p>')).toBe('')

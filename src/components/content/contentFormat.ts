@@ -82,3 +82,10 @@ export function contentText(body: string): string {
   element.querySelectorAll('p,h2,h3,h4,li,blockquote,pre,br').forEach((node) => node.append(' '))
   return element.textContent || ''
 }
+
+export function contentFirstImage(body: string): string {
+  if (!body.startsWith(BLOCK_MARKER)) return ''
+  const element = document.createElement('div')
+  element.innerHTML = contentHtml(body)
+  return element.querySelector('img')?.getAttribute('src') || ''
+}

@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import MagazinePage from '@/components/journal/MagazinePage.vue'
-import { contentText } from '@/components/content/contentFormat'
+import { contentFirstImage, contentText } from '@/components/content/contentFormat'
 import { balancedTextChunks } from '@/components/journal/textPagination'
 import {
   createJournalIssue,
@@ -314,6 +314,7 @@ function hydratePage(target: JournalPage, publicationId: string): void {
   const publication = candidates.value.find((item) => item.id === publicationId)
   if (!publication) return
   target.text = contentText(publication.body)
+  if (!target.image_url) target.image_url = contentFirstImage(publication.body)
   requestAnimationFrame(() => paginatePage(target))
 }
 function toggleMaterial(target: JournalPage, publicationId: string, selected: boolean): void {
@@ -385,10 +386,7 @@ function selectPage(index: number): void {
     ['cover', 'title', 'finale'].includes(target.template)
   )
     return
-  const publication = candidates.value.find((item) => item.id === target.publication_ids[0])
-  if (!publication) return
-  target.text = contentText(publication.body)
-  requestAnimationFrame(paginateText)
+  hydratePage(target, target.publication_ids[0]!)
 }
 function move(delta: number) {
   const target = active.value + delta
@@ -407,6 +405,11 @@ function openDraft(draft: JournalIssue) {
   month.value = draft.period_start.slice(0, 7)
   pages.value = (JSON.parse(JSON.stringify(draft.pages)) as JournalPage[]).map(normalizePage)
   saved.value = fingerprint.value
+  for (const target of pages.value) {
+    const publication = candidates.value.find((item) => item.id === target.publication_ids[0])
+    if (!target.continuation && !target.image_url && publication)
+      target.image_url = contentFirstImage(publication.body)
+  }
   paginateAllPages()
   selectPage(0)
   published.value = false
