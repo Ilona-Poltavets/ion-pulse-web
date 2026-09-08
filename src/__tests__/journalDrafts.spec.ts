@@ -1,15 +1,16 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { expect, it, vi } from 'vitest'
 
-const { listJournalIssues, listJournalDrafts } = vi.hoisted(() => ({
+const { listJournalIssues, listJournalDrafts, getJournalMaterials } = vi.hoisted(() => ({
   listJournalIssues: vi.fn<() => Promise<unknown[]>>(),
   listJournalDrafts: vi.fn<() => Promise<unknown[]>>(),
+  getJournalMaterials: vi.fn<() => Promise<unknown[]>>(),
 }))
 
 vi.mock('@/services/api', () => ({
   listJournalIssues,
   listJournalDrafts,
-  getJournalMaterials: vi.fn<() => Promise<unknown[]>>(),
+  getJournalMaterials,
 }))
 vi.mock('@/stores/auth', () => ({
   useAuthStore: () => ({ user: { roles: ['editor'] }, restore: vi.fn<() => Promise<void>>() }),
@@ -47,4 +48,32 @@ it('shows saved journal drafts to editors when no issue is published', async () 
 
   expect(wrapper.get('.journal-draft-card').text()).toContain('ION PULSE — 2026-09')
   expect(wrapper.get('.journal-draft-card').text()).toContain('2 стр.')
+})
+
+it('offers published journal editing to editors', async () => {
+  listJournalIssues.mockResolvedValue([
+    {
+      id: 'issue-1',
+      title: 'ION PULSE — Special Edition',
+      period_start: '2026-09-01T00:00:00Z',
+      period_end: '2026-10-01T00:00:00Z',
+      status: 'published',
+      published_at: '2026-09-08T00:00:00Z',
+      pages: [{ template: 'cover' }],
+    },
+  ])
+  listJournalDrafts.mockResolvedValue([])
+  getJournalMaterials.mockResolvedValue([])
+
+  const wrapper = mount(JournalView, {
+    global: {
+      stubs: {
+        RouterLink: { props: ['to'], template: '<a><slot /></a>' },
+        MagazineReader: true,
+      },
+    },
+  })
+  await flushPromises()
+
+  expect(wrapper.text()).toContain('Редактировать выпуск')
 })

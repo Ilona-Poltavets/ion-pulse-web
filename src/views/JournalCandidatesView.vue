@@ -11,6 +11,7 @@ import {
   createJournalIssue,
   listJournalCandidates,
   listJournalDrafts,
+  listJournalIssues,
   saveJournalIssue,
   uploadJournalImage,
   publishJournalIssue,
@@ -164,9 +165,13 @@ onMounted(async () => {
   if (allowed.value) {
     await load()
     try {
+      const publishedIssues = await listJournalIssues()
       drafts.value = await listJournalDrafts()
-      const requestedDraft = drafts.value.find((draft) => draft.id === route.query.draft)
-      if (requestedDraft) openDraft(requestedDraft)
+      const requestedId = route.query.issue || route.query.draft
+      const requestedIssue = [...drafts.value, ...publishedIssues].find(
+        (issue) => issue.id === requestedId,
+      )
+      if (requestedIssue) openDraft(requestedIssue)
     } catch (e) {
       error.value = String(e)
     }
@@ -463,7 +468,7 @@ function openDraft(draft: JournalIssue) {
   }
   paginateAllPages()
   selectPage(0)
-  published.value = false
+  published.value = draft.status === 'published'
 }
 async function save() {
   error.value = ''
@@ -487,7 +492,9 @@ async function save() {
     await saveJournalIssue(issueId.value, payload)
     saved.value = fingerprint.value
     drafts.value = await listJournalDrafts()
-    message.value = 'Черновик сохранён. Теперь его можно опубликовать.'
+    message.value = published.value
+      ? 'Опубликованный выпуск обновлён.'
+      : 'Черновик сохранён. Теперь его можно опубликовать.'
   } catch (e) {
     error.value = String(e)
   } finally {
@@ -525,12 +532,17 @@ async function publish() {
         {{ message }}
         <RouterLink v-if="published" :to="`/journal/${issueId}/read`">Читать выпуск →</RouterLink>
       </p>
-      <fieldset :disabled="busy || published" class="magazine-editor-fields">
+      <fieldset :disabled="busy" class="magazine-editor-fields">
         <div class="magazine-editor-toolbar">
           <label>Название<input v-model.trim="title" maxlength="240" /></label>
           <label>Месяц<input v-model="month" type="month" required /></label>
           <button class="button button-primary" @click="save">Сохранить</button>
-          <button class="button button-secondary" :disabled="dirty || !issueId" @click="publish">
+          <button
+            v-if="!published"
+            class="button button-secondary"
+            :disabled="dirty || !issueId"
+            @click="publish"
+          >
             Опубликовать
           </button>
           <button

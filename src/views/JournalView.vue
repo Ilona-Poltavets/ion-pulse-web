@@ -160,6 +160,13 @@ onBeforeUnmount(() => {
             <RouterLink class="button button-primary" :to="`/journal/${selected.id}/read`"
               >Листать журнал ↗</RouterLink
             >
+            <RouterLink
+              v-if="canEdit"
+              class="button button-secondary"
+              :to="{ path: '/journal/candidates', query: { issue: selected.id } }"
+            >
+              Редактировать выпуск
+            </RouterLink>
           </div>
         </div>
         <h2>В этом выпуске</h2>
@@ -178,6 +185,12 @@ onBeforeUnmount(() => {
       <template v-else>
         <div class="monthly-reader-bar">
           <RouterLink :to="`/journal/${selected.id}`">← К выпуску</RouterLink>
+          <RouterLink
+            v-if="canEdit"
+            :to="{ path: '/journal/candidates', query: { issue: selected.id } }"
+          >
+            Редактировать выпуск
+          </RouterLink>
         </div>
         <MagazineReader v-if="pages.length" :pages="pages" :materials="materials" />
       </template>
