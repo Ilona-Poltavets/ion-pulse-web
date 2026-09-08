@@ -2,7 +2,16 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { getRouletteGames, listGameSubscriptions, listGames, type Game } from '@/services/api'
+import {
+  getRouletteGames,
+  getSteamAccount,
+  getSteamConnectUrl,
+  listGameSubscriptions,
+  listGames,
+  listSteamLibrary,
+  type Game,
+  type SteamAccount,
+} from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
 type Mode = 'all' | 'library' | 'custom'
@@ -13,6 +22,7 @@ const mode = ref<Mode>('all')
 const count = ref(8)
 const catalog = ref<Game[]>([])
 const library = ref<Game[]>([])
+const steamAccount = ref<SteamAccount | null>(null)
 const customIds = ref<string[]>([])
 const wheelGames = ref<Game[]>([])
 const winner = ref<Game | null>(null)
@@ -39,6 +49,9 @@ const copy = computed(() =>
         again: 'Ещё раз',
         store: 'Открыть в Steam ↗',
         emptyLibrary: 'Подпишитесь на игры в профиле, чтобы собрать личное колесо.',
+        connect: 'Привязать Steam',
+        connected: 'Подключён Steam',
+        steamFailed: 'Не удалось привязать Steam. Попробуйте ещё раз.',
         choose: 'Выберите минимум две игры.',
         loadError: 'Не удалось загрузить игры.',
       }
@@ -57,6 +70,9 @@ const copy = computed(() =>
         again: 'Spin again',
         store: 'Open on Steam ↗',
         emptyLibrary: 'Follow games in your profile to build a personal wheel.',
+        connect: 'Connect Steam',
+        connected: 'Steam connected',
+        steamFailed: 'Could not connect Steam. Please try again.',
         choose: 'Choose at least two games.',
         loadError: 'Could not load games.',
       },
@@ -102,6 +118,10 @@ function spin(): void {
   }, 1500)
 }
 
+function connectSteam(): void {
+  window.location.assign(getSteamConnectUrl())
+}
+
 function useFallbackPoster(event: Event, game: Game): void {
   const image = event.currentTarget as HTMLImageElement
   if (game.fallback_poster_url && image.src !== game.fallback_poster_url) {
@@ -116,7 +136,16 @@ onMounted(async () => {
   try {
     catalog.value = await listGames()
     customIds.value = catalog.value.slice(0, 8).map((game) => game.id)
-    if (auth.isAuthenticated) library.value = await listGameSubscriptions()
+    if (auth.isAuthenticated) {
+      try {
+        steamAccount.value = await getSteamAccount()
+        library.value = await listSteamLibrary()
+      } catch {
+        library.value = await listGameSubscriptions()
+      }
+    }
+    const steamResult = new URLSearchParams(window.location.search).get('steam')
+    if (steamResult && steamResult !== 'connected') error.value = copy.value.steamFailed
     await fillWheel()
   } catch {
     error.value = copy.value.loadError
@@ -138,6 +167,21 @@ onMounted(async () => {
     <div v-if="loading" class="empty-state">{{ copy.spinning }}</div>
     <div v-else class="roulette-layout">
       <aside class="roulette-controls">
+        <button
+          v-if="auth.isAuthenticated && !steamAccount"
+          class="steam-connect-button"
+          type="button"
+          @click="connectSteam"
+        >
+          <span aria-hidden="true">◉</span> {{ copy.connect }}
+        </button>
+        <div v-else-if="steamAccount" class="steam-account-chip">
+          <img v-if="steamAccount.avatar_url" :src="steamAccount.avatar_url" alt="" />
+          <span>
+            <small>{{ copy.connected }}</small>
+            <strong>{{ steamAccount.display_name }}</strong>
+          </span>
+        </div>
         <div class="roulette-tabs" role="tablist">
           <button :class="{ active: mode === 'all' }" @click="mode = 'all'">{{ copy.all }}</button>
           <button
@@ -245,6 +289,42 @@ onMounted(async () => {
   display: grid;
   gap: 1.25rem;
   align-content: start;
+}
+.steam-connect-button,
+.steam-account-chip {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  min-height: 58px;
+  padding: 0.8rem 1rem;
+  color: var(--text);
+  background: linear-gradient(135deg, #1b2838, var(--surface));
+  border: 1px solid rgb(199 255 94 / 30%);
+  border-radius: 12px;
+}
+.steam-connect-button {
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+.steam-connect-button span {
+  color: var(--lime);
+  font-size: 1.35rem;
+}
+.steam-account-chip img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.steam-account-chip span {
+  display: grid;
+  gap: 0.1rem;
+}
+.steam-account-chip small {
+  color: var(--lime);
+  font-size: 0.67rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .roulette-tabs {
   display: flex;

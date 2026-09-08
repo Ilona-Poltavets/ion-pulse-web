@@ -195,6 +195,14 @@ export type CategoryUpdatePayload = Omit<ManagedCategory, 'slug'>
 export interface GameSubscription extends Game {
   subscribed_at: string
 }
+export interface SteamAccount {
+  steam_id: string
+  display_name: string
+  profile_url: string
+  avatar_url: string
+  game_count: number
+  last_imported_at: string | null
+}
 export interface AuthorSubscription {
   author_id: string
   display_name: string
@@ -589,6 +597,18 @@ export function listGames(): Promise<Game[]> {
 }
 export function getRouletteGames(count = 8): Promise<{ games: Game[] }> {
   return request(`/subscriptions/games/roulette?count=${count}`)
+}
+export function getSteamConnectUrl(): string {
+  return `${apiUrl}/api/v1/steam/connect`
+}
+export function getSteamAccount(): Promise<SteamAccount> {
+  return request('/steam/account')
+}
+export function listSteamLibrary(): Promise<Game[]> {
+  return request('/steam/library')
+}
+export async function disconnectSteam(): Promise<void> {
+  await request<undefined>('/steam/account', { method: 'DELETE' })
 }
 export function listGameSubscriptions(): Promise<GameSubscription[]> {
   return request('/subscriptions/games')
