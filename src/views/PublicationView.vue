@@ -105,14 +105,18 @@ async function load(): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    const [loadedPublication, loadedComments, loadedGames] = await Promise.all([
+    const [loadedPublication, loadedGames] = await Promise.all([
       getPublishedPublication(id, requestedLocale()),
-      listComments(id),
       listGames(),
     ])
     publication.value = loadedPublication
-    comments.value = loadedComments
     games.value = loadedGames
+    try {
+      comments.value = await listComments(id)
+    } catch (caught) {
+      comments.value = []
+      error.value = caught instanceof Error ? caught.message : t('publications.loadError')
+    }
     digestItems.value =
       loadedPublication.content_type === 'digest'
         ? await listDigestItems(id, requestedLocale())
