@@ -440,6 +440,16 @@ function applyPageLayout(editedPage: JournalPage): void {
   Object.assign(page.value, editedPage)
   message.value = 'Макет страницы изменён. Сохраните черновик.'
 }
+function startNewIssue(): void {
+  issueId.value = ''
+  pages.value = []
+  active.value = 0
+  title.value = `ION PULSE — ${month.value}`
+  published.value = false
+  saved.value = ''
+  error.value = ''
+  message.value = 'Создаётся новый выпуск за выбранный месяц.'
+}
 function openDraft(draft: JournalIssue) {
   issueId.value = draft.id
   title.value = draft.title
@@ -528,6 +538,14 @@ async function publish() {
           <button class="button button-primary" @click="save">Сохранить</button>
           <button class="button button-secondary" :disabled="dirty || !issueId" @click="publish">
             Опубликовать
+          </button>
+          <button
+            v-if="issueId && !dirty && !published"
+            class="button button-secondary"
+            type="button"
+            @click="startNewIssue"
+          >
+            Новый выпуск этого месяца
           </button>
           <span>{{ dirty ? 'Есть несохранённые изменения' : 'Сохранено' }}</span>
         </div>
@@ -749,6 +767,9 @@ async function publish() {
           </div>
         </div>
       </fieldset>
+      <button v-if="published" class="button button-primary" type="button" @click="startNewIssue">
+        Создать ещё один выпуск этого месяца
+      </button>
       <PageLayoutEditor
         v-if="page"
         v-model="pageLayoutEditorOpen"
