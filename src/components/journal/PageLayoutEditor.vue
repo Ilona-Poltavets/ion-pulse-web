@@ -17,8 +17,8 @@ const emit = defineEmits<{
 function clonePage(page: JournalPage): JournalPage {
   return JSON.parse(JSON.stringify(page)) as JournalPage
 }
-const draft = ref<JournalPage>(clonePage(props.page))
-const selectedId = ref<JournalLayoutBlock['id']>('heading')
+const draft = ref<JournalPage>(prepareDraft(props.page))
+const selectedId = ref<JournalLayoutBlock['id']>(draft.value.layout_blocks?.[0]?.id || 'heading')
 const selected = computed(() =>
   draft.value.layout_blocks?.find((block) => block.id === selectedId.value),
 )
@@ -30,6 +30,8 @@ const availableBlocks: Array<{ id: JournalLayoutBlock['id']; label: string }> = 
 ]
 
 function defaultLayout(): JournalLayoutBlock[] {
+  if (draft.value.continuation)
+    return [{ id: 'body', x: 3, y: 3, width: 94, height: 94, font_size: 14 }]
   const hasImage = Boolean(draft.value.image_url)
   return [
     { id: 'heading', x: 3, y: 3, width: hasImage ? 52 : 94, height: 24, font_size: 38 },
@@ -40,18 +42,53 @@ function defaultLayout(): JournalLayoutBlock[] {
     { id: 'body', x: 3, y: 48, width: 94, height: 49, font_size: 14 },
   ]
 }
+function defaultBlock(id: JournalLayoutBlock['id']): JournalLayoutBlock {
+  const preset = defaultLayout().find((block) => block.id === id)
+  if (preset) return preset
+  if (id === 'heading') return { id, x: 3, y: 3, width: 94, height: 16, font_size: 32 }
+  if (id === 'deck') return { id, x: 3, y: 20, width: 94, height: 14, font_size: 18 }
+  if (id === 'image') return { id, x: 55, y: 3, width: 42, height: 36, font_size: 14 }
+  return { id, x: 3, y: 3, width: 94, height: 94, font_size: 14 }
+}
+function prepareDraft(page: JournalPage): JournalPage {
+  const prepared = clonePage(page)
+  if (!prepared.continuation) return prepared
+
+  const previousBlocks = prepared.layout_blocks || []
+  const body = previousBlocks.find((block) => block.id === 'body')
+  const heading = prepared.heading
+    ? previousBlocks.find((block) => block.id === 'heading')
+    : undefined
+  prepared.layout_blocks = [
+    ...(heading ? [heading] : []),
+    body
+      ? {
+          ...body,
+          x: 3,
+          y: heading ? Math.max(20, body.y) : 3,
+          width: 94,
+          height: heading ? 76 : 94,
+        }
+      : {
+          id: 'body',
+          x: 3,
+          y: heading ? 20 : 3,
+          width: 94,
+          height: heading ? 76 : 94,
+          font_size: 14,
+        },
+  ]
+  return prepared
+}
 function resetLayout(): void {
   draft.value.layout_blocks = defaultLayout()
-  selectedId.value = 'heading'
+  selectedId.value = draft.value.layout_blocks[0]?.id || 'body'
 }
 function toggleBlock(id: JournalLayoutBlock['id']): void {
   const blocks = draft.value.layout_blocks || []
   const index = blocks.findIndex((block) => block.id === id)
   if (index >= 0) blocks.splice(index, 1)
-  else {
-    const preset = defaultLayout().find((block) => block.id === id)
-    if (preset) blocks.push(preset)
-  }
+  else blocks.push(defaultBlock(id))
   draft.value.layout_blocks = blocks
   selectedId.value = id
 }
@@ -69,7 +106,7 @@ watch(
   () => props.modelValue,
   (open) => {
     if (!open) return
-    draft.value = clonePage(props.page)
+    draft.value = prepareDraft(props.page)
     if (!draft.value.layout_blocks?.length) resetLayout()
     selectedId.value = draft.value.layout_blocks?.[0]?.id || 'heading'
   },

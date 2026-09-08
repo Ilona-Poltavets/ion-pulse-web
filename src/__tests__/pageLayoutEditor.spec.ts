@@ -15,7 +15,7 @@ describe('PageLayoutEditor', () => {
     const page = reactive<JournalPage>({
       template: 'feature',
       publication_ids: [],
-      heading: 'Заголовок',
+      heading: '',
       text: 'Текст страницы',
       image_url: '',
       accent: '#c5ef58',
@@ -26,8 +26,13 @@ describe('PageLayoutEditor', () => {
       text_y: 58,
       text_width: 84,
       text_size: 38,
-      continuation: false,
+      continuation: true,
       one_post_per_page: false,
+      layout_blocks: [
+        { id: 'heading', x: 3, y: 3, width: 94, height: 24, font_size: 38 },
+        { id: 'deck', x: 3, y: 29, width: 94, height: 16, font_size: 18 },
+        { id: 'body', x: 3, y: 48, width: 94, height: 49, font_size: 14 },
+      ],
     })
 
     const wrapper = mount(PageLayoutEditor, {
@@ -43,6 +48,7 @@ describe('PageLayoutEditor', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.get('.page-layout-controls').text()).toContain('БЛОКИ СТРАНИЦЫ')
+    expect(wrapper.get('.page-layout-block-list button.active').text()).toBe('Основной текст')
     expect(wrapper.find('.content-preview-modal').attributes('open')).toBeDefined()
     wrapper.unmount()
   })
