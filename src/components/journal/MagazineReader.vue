@@ -3,6 +3,12 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { JournalCandidate, JournalPage } from '@/services/api'
 import MagazinePage from './MagazinePage.vue'
 import { pageCurl } from './pageCurl'
+import {
+  canTurnReader,
+  normalizeDesktopReaderIndex,
+  readerRange,
+  readerStep,
+} from './readerPagination'
 
 const props = defineProps<{ pages: JournalPage[]; materials: JournalCandidate[] }>()
 const book = ref<HTMLElement>()
@@ -10,23 +16,38 @@ const index = ref(0)
 const width = ref(1200)
 const height = ref(780)
 const mobile = ref(false)
-const step = computed(() => (mobile.value ? 1 : 2))
+const pagesPerView = computed(() => (mobile.value ? 1 : 2))
 const progress = ref(0)
-const direction = ref(1)
+const direction = ref<1 | -1>(1)
 const tilt = ref(0.18)
 const phase = ref<'idle' | 'dragging' | 'settling'>('idle')
 const busy = computed(() => phase.value !== 'idle')
-const pageWidth = computed(() => width.value / step.value)
+const pageWidth = computed(() => width.value / pagesPerView.value)
 const curl = computed(() => pageCurl(pageWidth.value, height.value, progress.value, tilt.value))
-const next = computed(() => index.value + step.value < props.pages.length)
-const previous = computed(() => index.value > 0)
-const frontIndex = computed(() => index.value + (direction.value > 0 ? step.value - 1 : 0))
-const backIndex = computed(() => (direction.value > 0 ? index.value + step.value : index.value - 1))
+const turnStep = computed(() => readerStep(index.value, direction.value, mobile.value))
+const next = computed(() => canTurnReader(index.value, 1, props.pages.length, mobile.value))
+const previous = computed(() => canTurnReader(index.value, -1, props.pages.length, mobile.value))
+const range = computed(() => readerRange(index.value, props.pages.length, mobile.value))
+const coverMode = computed(
+  () =>
+    !mobile.value &&
+    (index.value === 0 || (busy.value && direction.value < 0 && index.value === 1)),
+)
+const frontIndex = computed(() =>
+  direction.value > 0 ? (index.value === 0 ? 0 : index.value + 1) : index.value,
+)
+const backIndex = computed(() =>
+  direction.value > 0 ? index.value + turnStep.value : index.value - 1,
+)
 const leftIndex = computed(() =>
-  busy.value && direction.value < 0 ? index.value - step.value : index.value,
+  busy.value && direction.value < 0
+    ? index.value - turnStep.value
+    : busy.value && direction.value > 0 && index.value === 0
+      ? 1
+      : index.value,
 )
 const rightIndex = computed(() =>
-  busy.value && direction.value > 0 ? index.value + step.value + 1 : index.value + 1,
+  busy.value && direction.value > 0 ? index.value + turnStep.value + 1 : index.value + 1,
 )
 const singleIndex = computed(() => (busy.value ? index.value + direction.value : index.value))
 let frame = 0
@@ -52,7 +73,7 @@ function reset() {
   progress.value = 0
 }
 function canTurn(value: number) {
-  return value > 0 ? next.value : previous.value
+  return canTurnReader(index.value, value > 0 ? 1 : -1, props.pages.length, mobile.value)
 }
 function settle(complete: boolean) {
   phase.value = 'settling'
@@ -66,7 +87,7 @@ function settle(complete: boolean) {
     progress.value = from + (target - from) * eased
     if (elapsed < 1) frame = requestAnimationFrame(animate)
     else {
-      if (complete) index.value += direction.value * step.value
+      if (complete) index.value += direction.value * turnStep.value
       reset()
     }
   }
@@ -74,7 +95,7 @@ function settle(complete: boolean) {
 }
 function turn(value: number) {
   if (busy.value || !canTurn(value)) return
-  direction.value = value
+  direction.value = value > 0 ? 1 : -1
   tilt.value = 0.2
   progress.value = 0
   settle(true)
@@ -163,7 +184,7 @@ onMounted(() => {
     if (width.value !== entry.contentRect.width || mobile.value !== single) {
       reset()
       mobile.value = single
-      index.value = single ? index.value : Math.floor(index.value / 2) * 2
+      index.value = single ? index.value : normalizeDesktopReaderIndex(index.value)
       width.value = entry.contentRect.width
     }
     height.value = entry.contentRect.height
@@ -201,6 +222,15 @@ onBeforeUnmount(() => {
             :page="pages[singleIndex]!"
             :materials="materials"
             :number="singleIndex + 1"
+          />
+        </template>
+        <template v-else-if="coverMode">
+          <MagazinePage
+            v-if="pages[0]"
+            class="curl-cover-page"
+            :page="pages[0]!"
+            :materials="materials"
+            :number="1"
           />
         </template>
         <template v-else>
@@ -271,9 +301,10 @@ onBeforeUnmount(() => {
       <button class="button button-secondary" :disabled="!previous || busy" @click="turn(-1)">
         ← Назад
       </button>
-      <span aria-live="polite"
-        >{{ index + 1 }}–{{ Math.min(index + step, pages.length) }} / {{ pages.length }}</span
-      >
+      <span aria-live="polite">
+        {{ range[0] }}<template v-if="range[1] !== range[0]">–{{ range[1] }}</template> /
+        {{ pages.length }}
+      </span>
       <button class="button button-primary" :disabled="!next || busy" @click="turn(1)">
         Далее →
       </button>
@@ -321,6 +352,12 @@ onBeforeUnmount(() => {
 }
 .curl-book > .magazine-page:nth-child(2) {
   box-shadow: inset 14px 0 22px #3027141c;
+}
+.curl-book > .curl-cover-page {
+  grid-column: 1 / -1;
+  width: 50%;
+  justify-self: center;
+  box-shadow: 0 25px 50px #0008;
 }
 .curl-end {
   display: grid;
