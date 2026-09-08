@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import MagazinePage from '@/components/journal/MagazinePage.vue'
+import PageLayoutEditor from '@/components/journal/PageLayoutEditor.vue'
 import { contentFirstImage, contentText } from '@/components/content/contentFormat'
 import { balancedTextChunks } from '@/components/journal/textPagination'
 import {
@@ -39,6 +40,7 @@ const message = ref('')
 const saved = ref('')
 const published = ref(false)
 const uploadingImage = ref(false)
+const pageLayoutEditorOpen = ref(false)
 const templates: Array<{
   id: JournalPage['template']
   name: string
@@ -420,6 +422,11 @@ function remove() {
   pages.value.splice(active.value, 1)
   active.value = Math.max(0, active.value - 1)
 }
+function applyPageLayout(editedPage: JournalPage): void {
+  if (!page.value) return
+  Object.assign(page.value, editedPage)
+  message.value = 'Макет страницы изменён. Сохраните черновик.'
+}
 function openDraft(draft: JournalIssue) {
   issueId.value = draft.id
   title.value = draft.title
@@ -549,6 +556,14 @@ async function publish() {
                 <button :disabled="active === 0" @click="move(-1)">↑</button
                 ><button :disabled="active === pages.length - 1" @click="move(1)">↓</button
                 ><button @click="remove">Удалить страницу</button>
+                <button
+                  v-if="!standalonePage"
+                  class="button button-primary"
+                  type="button"
+                  @click="pageLayoutEditorOpen = true"
+                >
+                  Редактор страницы
+                </button>
               </div>
               <label
                 >Шаблон<select v-model="page.template" @change="applyPreset(page)">
@@ -709,7 +724,7 @@ async function publish() {
               :page="page"
               :materials="candidates"
               :number="active + 1"
-              editable
+              :editable="standalonePage"
               @text-position="
                 ({ x, y }) => {
                   page!.text_x = x
@@ -721,6 +736,14 @@ async function publish() {
           </div>
         </div>
       </fieldset>
+      <PageLayoutEditor
+        v-if="page"
+        v-model="pageLayoutEditorOpen"
+        :page="page"
+        :materials="candidates"
+        :number="active + 1"
+        @save="applyPageLayout"
+      />
     </template>
   </section>
 </template>

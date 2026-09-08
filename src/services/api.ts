@@ -102,6 +102,14 @@ export interface JournalCandidate extends DigestItem {
   comment_count: number
   score: number
 }
+export interface JournalLayoutBlock {
+  id: 'heading' | 'deck' | 'image' | 'body'
+  x: number
+  y: number
+  width: number
+  height: number
+  font_size: number
+}
 export interface JournalPage {
   template:
     | 'cover'
@@ -129,6 +137,7 @@ export interface JournalPage {
   text_size: number
   continuation: boolean
   one_post_per_page: boolean
+  layout_blocks?: JournalLayoutBlock[]
 }
 export interface JournalIssue {
   pages: JournalPage[]

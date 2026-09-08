@@ -1,16 +1,23 @@
 <script setup lang="ts">
 import ContentBody from '@/components/content/ContentBody.vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
-import type { JournalCandidate, JournalPage } from '@/services/api'
+import type { JournalCandidate, JournalLayoutBlock, JournalPage } from '@/services/api'
 const props = defineProps<{
   page: JournalPage
   materials: JournalCandidate[]
   number: number
   editable?: boolean
 }>()
-const emit = defineEmits<{ textPosition: [position: { x: number; y: number }] }>()
+const emit = defineEmits<{
+  textPosition: [position: { x: number; y: number }]
+  layoutBlockPosition: [position: { id: JournalLayoutBlock['id']; x: number; y: number }]
+  layoutBlockSelect: [id: JournalLayoutBlock['id']]
+}>()
 const pageElement = ref<HTMLElement>()
 let drag: { pointerId: number; offsetX: number; offsetY: number } | undefined
+let blockDrag:
+  | { pointerId: number; id: JournalLayoutBlock['id']; offsetX: number; offsetY: number }
+  | undefined
 const stories = computed(() =>
   props.page.publication_ids
     .map((id) => props.materials.find((item) => item.id === id))
@@ -19,6 +26,8 @@ const stories = computed(() =>
 const standalone = computed(
   () => ['cover', 'title', 'finale'].includes(props.page.template) && !props.page.continuation,
 )
+const customLayout = computed(() => !standalone.value && Boolean(props.page.layout_blocks?.length))
+const primaryStory = computed(() => stories.value[0])
 const photoStyle = computed(() => ({
   width: `${props.page.image_width ?? 100}%`,
   height: `${props.page.image_height ?? 38}%`,
@@ -55,8 +64,53 @@ function moveText(event: PointerEvent): void {
 function endTextDrag(event: PointerEvent): void {
   if (drag?.pointerId === event.pointerId) drag = undefined
 }
+function blockStyle(block: JournalLayoutBlock) {
+  return {
+    left: `${block.x}%`,
+    top: `${block.y}%`,
+    width: `${block.width}%`,
+    height: `${block.height}%`,
+    fontSize: `${block.font_size}px`,
+  }
+}
+function startBlockDrag(event: PointerEvent, block: JournalLayoutBlock): void {
+  if (!props.editable || !pageElement.value) return
+  const target = event.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  blockDrag = {
+    pointerId: event.pointerId,
+    id: block.id,
+    offsetX: event.clientX - rect.left,
+    offsetY: event.clientY - rect.top,
+  }
+  emit('layoutBlockSelect', block.id)
+  target.setPointerCapture(event.pointerId)
+}
+function moveBlock(event: PointerEvent): void {
+  if (!blockDrag || blockDrag.pointerId !== event.pointerId || !pageElement.value) return
+  const rect = pageElement.value.getBoundingClientRect()
+  emit('layoutBlockPosition', {
+    id: blockDrag.id,
+    x: Math.round(
+      Math.max(
+        0,
+        Math.min(95, ((event.clientX - rect.left - blockDrag.offsetX) / rect.width) * 100),
+      ),
+    ),
+    y: Math.round(
+      Math.max(
+        0,
+        Math.min(95, ((event.clientY - rect.top - blockDrag.offsetY) / rect.height) * 100),
+      ),
+    ),
+  })
+}
+function endBlockDrag(event: PointerEvent): void {
+  if (blockDrag?.pointerId === event.pointerId) blockDrag = undefined
+}
 onBeforeUnmount(() => {
   drag = undefined
+  blockDrag = undefined
 })
 </script>
 <template>
@@ -99,50 +153,74 @@ onBeforeUnmount(() => {
           },
         ]"
       >
-        <img
-          v-if="page.image_url"
-          class="magazine-photo"
-          :style="photoStyle"
-          :src="page.image_url"
-          alt=""
-        />
-        <h2 v-if="page.heading" class="magazine-heading">{{ page.heading }}</h2>
-        <ol v-if="page.template === 'contents'" class="magazine-contents-list">
-          <li v-for="(story, index) in stories" :key="story.id">
-            <b>{{ String(number + index + 1).padStart(2, '0') }}</b>
-            <span
-              ><small>{{ story.category_slug }}</small
-              ><strong>{{ story.title }}</strong></span
-            >
-          </li>
-        </ol>
-        <div v-else-if="page.template === 'infographic'" class="magazine-infographic">
-          <section v-for="story in stories" :key="story.id">
-            <strong>{{ story.view_count }}</strong
-            ><span>просмотров</span> <b>{{ story.comment_count }}</b
-            ><span>комментариев</span>
-            <small>{{ story.title }}</small>
-          </section>
-        </div>
-        <div v-else class="magazine-stories">
-          <section v-for="story in stories" :key="story.id" class="magazine-story">
-            <small>{{ story.category_slug }}</small>
-            <h2 v-if="!page.continuation && (!page.heading || stories.length > 1)">
-              {{ story.title }}
-            </h2>
-            <p v-if="!page.continuation" class="magazine-deck">{{ story.summary }}</p>
+        <div v-if="customLayout" class="magazine-custom-layout">
+          <div
+            v-for="block in page.layout_blocks"
+            :key="block.id"
+            class="magazine-layout-block"
+            :class="[`block-${block.id}`, { editable }]"
+            :style="blockStyle(block)"
+            @pointerdown="startBlockDrag($event, block)"
+            @pointermove="moveBlock"
+            @pointerup="endBlockDrag"
+            @pointercancel="endBlockDrag"
+          >
+            <img v-if="block.id === 'image' && page.image_url" :src="page.image_url" alt="" />
+            <h2 v-else-if="block.id === 'heading'">{{ page.heading || primaryStory?.title }}</h2>
+            <p v-else-if="block.id === 'deck'">{{ primaryStory?.summary }}</p>
             <ContentBody
+              v-else-if="block.id === 'body'"
               class="magazine-copy"
-              :body="page.text && stories.length === 1 ? page.text : story.body"
+              :body="page.text || primaryStory?.body || ''"
             />
-            <RouterLink :to="`/publications/${story.id}`">↗ {{ story.title }}</RouterLink>
-          </section>
+          </div>
         </div>
-        <ContentBody
-          v-if="page.text && stories.length !== 1"
-          class="magazine-copy"
-          :body="page.text"
-        />
+        <template v-else>
+          <img
+            v-if="page.image_url"
+            class="magazine-photo"
+            :style="photoStyle"
+            :src="page.image_url"
+            alt=""
+          />
+          <h2 v-if="page.heading" class="magazine-heading">{{ page.heading }}</h2>
+          <ol v-if="page.template === 'contents'" class="magazine-contents-list">
+            <li v-for="(story, index) in stories" :key="story.id">
+              <b>{{ String(number + index + 1).padStart(2, '0') }}</b>
+              <span
+                ><small>{{ story.category_slug }}</small
+                ><strong>{{ story.title }}</strong></span
+              >
+            </li>
+          </ol>
+          <div v-else-if="page.template === 'infographic'" class="magazine-infographic">
+            <section v-for="story in stories" :key="story.id">
+              <strong>{{ story.view_count }}</strong
+              ><span>просмотров</span> <b>{{ story.comment_count }}</b
+              ><span>комментариев</span>
+              <small>{{ story.title }}</small>
+            </section>
+          </div>
+          <div v-else class="magazine-stories">
+            <section v-for="story in stories" :key="story.id" class="magazine-story">
+              <small>{{ story.category_slug }}</small>
+              <h2 v-if="!page.continuation && (!page.heading || stories.length > 1)">
+                {{ story.title }}
+              </h2>
+              <p v-if="!page.continuation" class="magazine-deck">{{ story.summary }}</p>
+              <ContentBody
+                class="magazine-copy"
+                :body="page.text && stories.length === 1 ? page.text : story.body"
+              />
+              <RouterLink :to="`/publications/${story.id}`">↗ {{ story.title }}</RouterLink>
+            </section>
+          </div>
+          <ContentBody
+            v-if="page.text && stories.length !== 1"
+            class="magazine-copy"
+            :body="page.text"
+          />
+        </template>
       </div>
       <footer class="magazine-running">
         <span>KEEP READING. STAY CURIOUS.</span><b>{{ String(number).padStart(2, '0') }}</b>
@@ -186,6 +264,49 @@ onBeforeUnmount(() => {
   flex: 1;
   padding: 18px 0;
   min-height: 0;
+}
+.magazine-custom-layout {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.magazine-layout-block {
+  position: absolute;
+  box-sizing: border-box;
+  overflow: hidden;
+  line-height: 1.35;
+}
+.magazine-layout-block.editable {
+  cursor: grab;
+  touch-action: none;
+  outline: 1px dashed rgb(35 37 31 / 35%);
+  outline-offset: 3px;
+}
+.magazine-layout-block.editable:active {
+  cursor: grabbing;
+  outline-color: var(--ink-accent);
+}
+.magazine-layout-block h2,
+.magazine-layout-block p {
+  margin: 0;
+  font: inherit;
+}
+.magazine-layout-block.block-heading {
+  font-weight: 700;
+  line-height: 1.04;
+}
+.magazine-layout-block.block-deck {
+  padding-left: 14px;
+  border-left: 4px solid var(--ink-accent);
+  font-style: italic;
+}
+.magazine-layout-block.block-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.magazine-layout-block.block-body {
+  line-height: 1.55;
 }
 .magazine-heading,
 .magazine-story h2 {
