@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
           </RouterLink>
           <div class="monthly-intro">
             <p class="eyebrow">НОВЫЙ ВЫПУСК · {{ selected.period_start.slice(0, 7) }}</p>
-            <h2>Месяц.<br />Бумага.<br /><em>Память.</em></h2>
+            <h2>Топ обзоры<br />Горячие новости<br /><em>Интервью</em></h2>
             <p>Новости, истории и открытия — в ритме настоящего журнала.</p>
             <RouterLink class="button button-primary" :to="`/journal/${selected.id}/read`"
               >Листать журнал ↗</RouterLink
