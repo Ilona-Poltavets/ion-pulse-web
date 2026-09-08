@@ -14,7 +14,10 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   save: [page: JournalPage]
 }>()
-const draft = ref<JournalPage>(structuredClone(props.page))
+function clonePage(page: JournalPage): JournalPage {
+  return JSON.parse(JSON.stringify(page)) as JournalPage
+}
+const draft = ref<JournalPage>(clonePage(props.page))
 const selectedId = ref<JournalLayoutBlock['id']>('heading')
 const selected = computed(() =>
   draft.value.layout_blocks?.find((block) => block.id === selectedId.value),
@@ -59,14 +62,14 @@ function moveBlock({ id, x, y }: { id: JournalLayoutBlock['id']; x: number; y: n
   block.y = Math.min(y, 100 - block.height)
 }
 function save(): void {
-  emit('save', structuredClone(draft.value))
+  emit('save', clonePage(draft.value))
   emit('update:modelValue', false)
 }
 watch(
   () => props.modelValue,
   (open) => {
     if (!open) return
-    draft.value = structuredClone(props.page)
+    draft.value = clonePage(props.page)
     if (!draft.value.layout_blocks?.length) resetLayout()
     selectedId.value = draft.value.layout_blocks?.[0]?.id || 'heading'
   },
