@@ -15,6 +15,10 @@ import PasswordResetView from '@/views/PasswordResetView.vue'
 import SanctionAppealView from '@/views/SanctionAppealView.vue'
 import AdminUsersView from '@/views/AdminUsersView.vue'
 import GameRouletteView from '@/views/GameRouletteView.vue'
+import GameView from '@/views/GameView.vue'
+import SearchView from '@/views/SearchView.vue'
+import BookmarksView from '@/views/BookmarksView.vue'
+import EditorialDashboardView from '@/views/EditorialDashboardView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,6 +29,10 @@ const router = createRouter({
       component: HomeView,
     },
     { path: '/games/roulette', name: 'game-roulette', component: GameRouletteView },
+    { path: '/games/:slug', name: 'game', component: GameView },
+    { path: '/search', name: 'search', component: SearchView },
+    { path: '/bookmarks', name: 'bookmarks', component: BookmarksView },
+    { path: '/editorial/desk', name: 'editorial-desk', component: EditorialDashboardView },
     { path: '/content/categories', name: 'categories-management', component: CategoriesView },
     { path: '/journal/candidates', name: 'journal-candidates', component: JournalCandidatesView },
     { path: '/journal/:id/read', name: 'journal-reader', component: JournalView },

@@ -52,6 +52,7 @@ void auth.restore()
           <RouterLink to="/#categories">{{ t('navigation.categories') }}</RouterLink>
           <RouterLink to="/journal">{{ t('navigation.journal') }}</RouterLink>
           <RouterLink to="/games/roulette">{{ t('navigation.roulette') }}</RouterLink>
+          <RouterLink to="/search">Поиск</RouterLink>
         </nav>
 
         <div class="header-actions">
@@ -66,6 +67,16 @@ void auth.restore()
             <div class="workspace-menu-panel">
               <RouterLink to="/profile">{{ t('navigation.myPublications') }}</RouterLink>
               <RouterLink to="/write">{{ t('navigation.write') }}</RouterLink>
+              <RouterLink to="/bookmarks">Закладки</RouterLink>
+              <RouterLink
+                v-if="
+                  auth.user?.roles.some((role) =>
+                    ['editor', 'content_manager', 'administrator'].includes(role),
+                  )
+                "
+                to="/editorial/desk"
+                >Рабочий стол редакции</RouterLink
+              >
               <hr v-if="isStaff" />
               <RouterLink
                 v-if="

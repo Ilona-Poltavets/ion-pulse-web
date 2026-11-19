@@ -485,6 +485,169 @@ export function listPublishedPublications(
   if (options.offset) parameters.set('offset', String(options.offset))
   return request(`/publications/feed?${parameters}`)
 }
+export interface DiscoverItem {
+  id: string
+  category_slug: string
+  content_type: string
+  game_slug: string | null
+  game_title: string | null
+  review_score: number | null
+  title: string
+  summary: string
+  author_name: string
+  published_at: string
+  tags: string[]
+  view_count: number
+}
+export interface DiscoverFilters {
+  q?: string
+  category?: string
+  game?: string
+  tag?: string
+  content_type?: string
+  min_score?: number
+  sort?: 'new' | 'score' | 'views'
+  limit?: number
+  offset?: number
+}
+export interface TagCount {
+  tag: string
+  count: number
+}
+export interface GameSummary {
+  id: string
+  slug: string
+  title: string
+  publication_count: number
+  review_count: number
+  average_score: number | null
+  subscriber_count: number
+}
+export interface GameOverview extends GameSummary {
+  publications: DiscoverItem[]
+}
+export function searchMaterials(
+  locale: 'ru' | 'en',
+  filters: DiscoverFilters = {},
+): Promise<DiscoverItem[]> {
+  const parameters = new URLSearchParams({ locale })
+  for (const [key, value] of Object.entries(filters))
+    if (value !== undefined && value !== '') parameters.set(key, String(value))
+  return request(`/discover/search?${parameters}`)
+}
+export function listDiscoverTags(): Promise<TagCount[]> {
+  return request('/discover/tags')
+}
+export function listGameSummaries(): Promise<GameSummary[]> {
+  return request('/discover/games')
+}
+export function getGameOverview(slug: string, locale: 'ru' | 'en'): Promise<GameOverview> {
+  return request(`/discover/games/${encodeURIComponent(slug)}?locale=${locale}`)
+}
+export function listBookmarkIds(): Promise<string[]> {
+  return request('/discover/bookmarks/ids')
+}
+export function listBookmarks(locale: 'ru' | 'en'): Promise<DiscoverItem[]> {
+  return request(`/discover/bookmarks?locale=${locale}`)
+}
+export function addBookmark(publicationId: string): Promise<void> {
+  return request(`/discover/bookmarks/${publicationId}`, { method: 'PUT' })
+}
+export function removeBookmark(publicationId: string): Promise<void> {
+  return request(`/discover/bookmarks/${publicationId}`, { method: 'DELETE' })
+}
+export interface CalendarEntry {
+  kind: 'publication' | 'issue'
+  id: string
+  title: string
+  status: string
+  at: string
+}
+export interface EditorialStats {
+  published: number
+  total_views: number
+  total_comments: number
+  draft_issues: number
+  published_issues: number
+  categories: Array<{ slug: string; publications: number; views: number }>
+  top: Array<{
+    id: string
+    title: string
+    category_slug: string
+    views: number
+    comments: number
+    average_rating: number | null
+  }>
+}
+export interface IssueNote {
+  id: string
+  author_name: string
+  page_index: number | null
+  body: string
+  created_at: string
+}
+export interface LinkPreview {
+  source_url: string
+  site_name: string
+  title: string
+  description: string
+  image_url: string
+}
+export interface OpenImage {
+  title: string
+  thumbnail_url: string
+  image_url: string
+  page_url: string
+  author: string
+  license: string
+}
+export interface SystemDiagnostics {
+  service: string
+  version: string
+  environment: string
+  started_at: string
+  uptime_seconds: number
+  database_latency_ms: number
+  migration_revision: string | null
+  checks: Array<{ name: string; ok: boolean; detail: string }>
+  queues: Record<string, Record<string, number>>
+}
+export function getDiagnostics(): Promise<SystemDiagnostics> {
+  return request('/diagnostics', { cache: 'no-store' })
+}
+export function getEditorialCalendar(month: string): Promise<CalendarEntry[]> {
+  return request(`/editorial/calendar?month=${month}`)
+}
+export function getEditorialStats(): Promise<EditorialStats> {
+  return request('/editorial/stats')
+}
+export function listIssueNotes(issueId: string): Promise<IssueNote[]> {
+  return request(`/editorial/issues/${issueId}/notes`)
+}
+export function addIssueNote(
+  issueId: string,
+  body: string,
+  pageIndex: number | null,
+): Promise<IssueNote> {
+  return request(`/editorial/issues/${issueId}/notes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ body, page_index: pageIndex }),
+  })
+}
+export function deleteIssueNote(issueId: string, noteId: string): Promise<void> {
+  return request(`/editorial/issues/${issueId}/notes/${noteId}`, { method: 'DELETE' })
+}
+export function previewLink(url: string): Promise<LinkPreview> {
+  return request('/editorial/link-preview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  })
+}
+export function searchOpenImages(query: string): Promise<OpenImage[]> {
+  return request(`/editorial/open-images?q=${encodeURIComponent(query)}`)
+}
 export function listCategories(locale: 'ru' | 'en'): Promise<Category[]> {
   return request(`/categories?locale=${locale}`)
 }

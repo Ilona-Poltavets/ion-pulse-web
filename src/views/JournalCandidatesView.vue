@@ -1,20 +1,27 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import MagazinePage from '@/components/journal/MagazinePage.vue'
 import PageLayoutEditor from '@/components/journal/PageLayoutEditor.vue'
+import PageThumbnails from '@/components/journal/PageThumbnails.vue'
 import { contentFirstImage, contentText } from '@/components/content/contentFormat'
 import { balancedTextChunks } from '@/components/journal/textPagination'
+import { composeIssue } from '@/components/journal/autoCompose'
+import { useEditorHistory } from '@/components/journal/useEditorHistory'
 import {
+  addIssueNote,
   createJournalIssue,
+  deleteIssueNote,
+  listIssueNotes,
   listJournalCandidates,
   listJournalDrafts,
   listJournalIssues,
   saveJournalIssue,
   uploadJournalImage,
   publishJournalIssue,
+  type IssueNote,
   type JournalCandidate,
   type JournalIssue,
   type JournalPage,
@@ -28,6 +35,7 @@ const allowed = computed(() =>
 const month = ref(new Date().toISOString().slice(0, 7))
 const title = ref('ION PULSE — ' + month.value)
 const pages = ref<JournalPage[]>([])
+const history = useEditorHistory(pages)
 const active = ref(0)
 const page = computed(() => pages.value[active.value])
 const candidates = ref<JournalCandidate[]>([])
@@ -172,15 +180,136 @@ onMounted(async () => {
         (issue) => issue.id === requestedId,
       )
       if (requestedIssue) openDraft(requestedIssue)
+      else if (!pages.value.length) {
+        const backup = readBackup()
+        if (backup) {
+          title.value = backup.title
+          month.value = backup.month
+          pages.value = backup.pages.map(normalizePage)
+          message.value = 'Восстановлен несохранённый черновик из этого браузера.'
+        } else autoCompose()
+        saved.value = ''
+        history.reset()
+      }
     } catch (e) {
       error.value = String(e)
     }
   }
+  window.addEventListener('keydown', historyShortcut)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', historyShortcut)
+  clearTimeout(backupTimer)
+  clearTimeout(autosaveTimer)
 })
 watch([month, locale], load)
-function add(template: JournalPage['template']) {
+
+const notes = ref<IssueNote[]>([])
+const noteText = ref('')
+const noteOnPage = ref(true)
+const notesError = ref('')
+async function loadNotes(): Promise<void> {
+  notes.value = []
+  if (!issueId.value) return
+  try {
+    notes.value = await listIssueNotes(issueId.value)
+    notesError.value = ''
+  } catch (caught) {
+    notesError.value = caught instanceof Error ? caught.message : String(caught)
+  }
+}
+async function postNote(): Promise<void> {
+  const body = noteText.value.trim()
+  if (!body || !issueId.value) return
+  try {
+    notes.value.push(
+      await addIssueNote(issueId.value, body, noteOnPage.value ? active.value : null),
+    )
+    noteText.value = ''
+    notesError.value = ''
+  } catch (caught) {
+    notesError.value = caught instanceof Error ? caught.message : String(caught)
+  }
+}
+async function removeNote(noteId: string): Promise<void> {
+  try {
+    await deleteIssueNote(issueId.value, noteId)
+    notes.value = notes.value.filter((note) => note.id !== noteId)
+  } catch (caught) {
+    notesError.value = caught instanceof Error ? caught.message : String(caught)
+  }
+}
+watch(issueId, loadNotes)
+
+const BACKUP_PREFIX = 'ion-pulse:journal-draft:'
+interface DraftBackup {
+  title: string
+  month: string
+  pages: JournalPage[]
+}
+function backupKey(id = issueId.value): string {
+  return BACKUP_PREFIX + (id || 'new')
+}
+function readBackup(): DraftBackup | undefined {
+  try {
+    const value = JSON.parse(localStorage.getItem(backupKey()) || 'null') as DraftBackup | null
+    return value && Array.isArray(value.pages) && value.pages.length ? value : undefined
+  } catch {
+    return undefined
+  }
+}
+function writeBackup(): void {
+  try {
+    localStorage.setItem(
+      backupKey(),
+      JSON.stringify({ title: title.value, month: month.value, pages: pages.value }),
+    )
+  } catch {
+    // Storage can be unavailable or full; the server draft remains the source of truth.
+  }
+}
+function clearBackup(id = issueId.value): void {
+  try {
+    localStorage.removeItem(backupKey(id))
+  } catch {
+    // Nothing to clean up when storage is unavailable.
+  }
+}
+let backupTimer: ReturnType<typeof setTimeout> | undefined
+let autosaveTimer: ReturnType<typeof setTimeout> | undefined
+watch(fingerprint, () => {
+  clearTimeout(backupTimer)
+  backupTimer = setTimeout(() => {
+    if (dirty.value && pages.value.length && !published.value) writeBackup()
+  }, 1500)
+  clearTimeout(autosaveTimer)
+  if (issueId.value && !published.value)
+    autosaveTimer = setTimeout(() => {
+      if (dirty.value && !busy.value && title.value.length >= 5) void save(true)
+    }, 8000)
+})
+function undoEdit(): void {
+  if (history.undo()) active.value = Math.min(active.value, Math.max(0, pages.value.length - 1))
+}
+function redoEdit(): void {
+  if (history.redo()) active.value = Math.min(active.value, Math.max(0, pages.value.length - 1))
+}
+function historyShortcut(event: KeyboardEvent): void {
+  if (!(event.ctrlKey || event.metaKey) || event.altKey) return
+  const target = event.target as HTMLElement | null
+  if (target?.closest('input,textarea,select,[contenteditable=true]')) return
+  const key = event.key.toLowerCase()
+  if (key === 'z' && !event.shiftKey) {
+    event.preventDefault()
+    undoEdit()
+  } else if (key === 'y' || (key === 'z' && event.shiftKey)) {
+    event.preventDefault()
+    redoEdit()
+  }
+}
+function buildPage(template: JournalPage['template']): JournalPage {
   const preset = templates.find((item) => item.id === template)
-  pages.value.push({
+  return {
     template,
     publication_ids: [],
     heading: '',
@@ -197,8 +326,38 @@ function add(template: JournalPage['template']) {
     continuation: false,
     one_post_per_page: false,
     ...preset?.defaults,
-  })
+  }
+}
+function add(template: JournalPage['template']) {
+  pages.value.push(buildPage(template))
   active.value = pages.value.length - 1
+}
+const composeSettings = ref({
+  target: 30,
+  categories: [] as string[],
+  priority: '',
+  openerEvery: 4,
+})
+const candidateCategories = computed(() => [
+  ...new Set(candidates.value.map((candidate) => candidate.category_slug)),
+])
+function autoCompose(): boolean {
+  const settings = composeSettings.value
+  const composed = composeIssue(sorted.value, title.value, buildPage, {
+    target: Math.min(80, Math.max(8, Number(settings.target) || 30)),
+    categories: settings.categories,
+    priority: settings.priority || undefined,
+    openerEvery: Math.max(0, Number(settings.openerEvery) || 0),
+  })
+  if (!composed.length) return false
+  pages.value = composed
+  active.value = 0
+  message.value = `Журнал собран автоматически: ${composed.length} стр. Отредактируйте или удалите лишнее.`
+  return true
+}
+function requestAutoCompose(): void {
+  if (pages.value.length && !window.confirm('Заменить текущие страницы автосборкой?')) return
+  if (!autoCompose()) error.value = 'Нет опубликованных материалов за выбранный месяц.'
 }
 function materialLimit(template: JournalPage['template']): number {
   if (template === 'contents') return 12
@@ -423,6 +582,28 @@ function move(delta: number) {
   if (item) pages.value.splice(target, 0, item)
   active.value = target
 }
+const printing = ref(false)
+async function exportPdf(): Promise<void> {
+  printing.value = true
+  document.body.classList.add('printing-issue')
+  await nextTick()
+  // Let the browser lay out every page and load its image before the print dialog opens.
+  await new Promise((resolve) => setTimeout(resolve, 400))
+  const finish = () => {
+    printing.value = false
+    document.body.classList.remove('printing-issue')
+    window.removeEventListener('afterprint', finish)
+  }
+  window.addEventListener('afterprint', finish)
+  window.print()
+}
+function reorderPage(from: number, to: number): void {
+  if (from === to || to < 0 || to >= pages.value.length) return
+  const item = pages.value.splice(from, 1)[0]
+  if (!item) return
+  pages.value.splice(to, 0, item)
+  active.value = to
+}
 function remove() {
   pages.value.splice(active.value, 1)
   active.value = Math.max(0, active.value - 1)
@@ -441,6 +622,8 @@ function startNewIssue(): void {
   saved.value = ''
   error.value = ''
   message.value = 'Создаётся новый выпуск за выбранный месяц.'
+  autoCompose()
+  history.reset()
 }
 function openDraft(draft: JournalIssue) {
   issueId.value = draft.id
@@ -455,8 +638,9 @@ function openDraft(draft: JournalIssue) {
   }
   selectPage(0)
   published.value = draft.status === 'published'
+  history.reset()
 }
-async function save() {
+async function save(auto = false) {
   error.value = ''
   message.value = ''
   if (title.value.length < 5) {
@@ -474,13 +658,17 @@ async function save() {
       period_end: end.toISOString(),
       pages: pages.value,
     }
+    clearBackup()
     if (!issueId.value) issueId.value = (await createJournalIssue(payload)).id
     await saveJournalIssue(issueId.value, payload)
     saved.value = fingerprint.value
+    clearBackup()
     drafts.value = await listJournalDrafts()
     message.value = published.value
       ? 'Опубликованный выпуск обновлён.'
-      : 'Черновик сохранён. Теперь его можно опубликовать.'
+      : auto
+        ? 'Черновик автоматически сохранён.'
+        : 'Черновик сохранён. Теперь его можно опубликовать.'
   } catch (e) {
     error.value = String(e)
   } finally {
@@ -522,7 +710,25 @@ async function publish() {
         <div class="magazine-editor-toolbar">
           <label>Название<input v-model.trim="title" maxlength="240" /></label>
           <label>Месяц<input v-model="month" type="month" required /></label>
-          <button class="button button-primary" @click="save">Сохранить</button>
+          <button class="button button-primary" @click="save()">Сохранить</button>
+          <button
+            class="button button-secondary"
+            type="button"
+            title="Отменить (Ctrl+Z)"
+            :disabled="!history.canUndo.value"
+            @click="undoEdit"
+          >
+            ↶ Отменить
+          </button>
+          <button
+            class="button button-secondary"
+            type="button"
+            title="Повторить (Ctrl+Y)"
+            :disabled="!history.canRedo.value"
+            @click="redoEdit"
+          >
+            ↷ Повторить
+          </button>
           <button
             v-if="!published"
             class="button button-secondary"
@@ -539,8 +745,87 @@ async function publish() {
           >
             Новый выпуск этого месяца
           </button>
+          <button
+            v-if="!published"
+            class="button button-secondary"
+            type="button"
+            @click="requestAutoCompose"
+          >
+            Автосборка (~{{ composeSettings.target }} стр.)
+          </button>
+          <button
+            v-if="pages.length"
+            class="button button-secondary"
+            type="button"
+            title="Откроется окно печати: выберите «Сохранить как PDF»"
+            @click="exportPdf"
+          >
+            Экспорт в PDF
+          </button>
+          <details v-if="!published" class="compose-settings">
+            <summary>Настройки автосборки</summary>
+            <label>
+              Страниц
+              <input v-model.number="composeSettings.target" type="number" min="8" max="80" />
+            </label>
+            <label>
+              Фотостраница перед каждой N-й статьёй (0 — без них)
+              <input v-model.number="composeSettings.openerEvery" type="number" min="0" max="20" />
+            </label>
+            <label>
+              Сначала показывать рубрику
+              <select v-model="composeSettings.priority">
+                <option value="">— по рейтингу —</option>
+                <option v-for="slug in candidateCategories" :key="slug" :value="slug">
+                  {{ slug }}
+                </option>
+              </select>
+            </label>
+            <fieldset>
+              <legend>Только рубрики (пусто — все)</legend>
+              <label v-for="slug in candidateCategories" :key="slug">
+                <input v-model="composeSettings.categories" type="checkbox" :value="slug" />
+                {{ slug }}
+              </label>
+            </fieldset>
+          </details>
           <span>{{ dirty ? 'Есть несохранённые изменения' : 'Сохранено' }}</span>
         </div>
+        <details v-if="issueId" class="issue-notes">
+          <summary>Заметки редакции ({{ notes.length }})</summary>
+          <p v-if="notesError" class="form-error" role="alert">{{ notesError }}</p>
+          <ul>
+            <li v-for="entry in notes" :key="entry.id">
+              <strong>{{ entry.author_name }}</strong>
+              <button
+                v-if="entry.page_index !== null"
+                type="button"
+                class="issue-note-page"
+                @click="selectPage(entry.page_index)"
+              >
+                стр. {{ entry.page_index + 1 }}
+              </button>
+              <small>{{ new Date(entry.created_at).toLocaleString('ru-RU') }}</small>
+              <button type="button" class="issue-note-delete" @click="removeNote(entry.id)">
+                Удалить
+              </button>
+              <p>{{ entry.body }}</p>
+            </li>
+          </ul>
+          <form class="issue-note-form" @submit.prevent="postNote">
+            <textarea
+              v-model="noteText"
+              rows="2"
+              maxlength="2000"
+              placeholder="Комментарий к выпуску…"
+              aria-label="Заметка"
+            ></textarea>
+            <label class="issue-note-check">
+              <input v-model="noteOnPage" type="checkbox" /> К странице {{ active + 1 }}
+            </label>
+            <button class="button button-secondary" :disabled="!noteText.trim()">Добавить</button>
+          </form>
+        </details>
         <details v-if="drafts.length">
           <summary>Сохранённые черновики</summary>
           <button
@@ -564,6 +849,13 @@ async function publish() {
         <div class="magazine-workspace">
           <aside>
             <h2>Страницы · {{ pages.length }}</h2>
+            <PageThumbnails
+              :pages="pages"
+              :materials="candidates"
+              :active="active"
+              @select="selectPage"
+              @reorder="reorderPage"
+            />
             <button
               v-for="(entry, index) in pages"
               :key="index"
@@ -771,8 +1063,47 @@ async function publish() {
         @save="applyPageLayout"
       />
     </template>
+    <div v-if="printing" class="print-issue" aria-hidden="true">
+      <div v-for="(entry, index) in pages" :key="index" class="print-sheet">
+        <MagazinePage :page="entry" :materials="candidates" :number="index + 1" />
+      </div>
+    </div>
   </section>
 </template>
+<style>
+@page {
+  size: A5 portrait;
+  margin: 0;
+}
+.print-issue {
+  display: none;
+}
+@media print {
+  body.printing-issue * {
+    visibility: hidden;
+  }
+  body.printing-issue .print-issue,
+  body.printing-issue .print-issue * {
+    visibility: visible;
+  }
+  body.printing-issue .print-issue {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 148mm;
+  }
+  body.printing-issue .print-sheet {
+    width: 148mm;
+    height: 210mm;
+    overflow: hidden;
+    break-after: page;
+  }
+  body.printing-issue .print-sheet > * {
+    height: 210mm;
+  }
+}
+</style>
 <style scoped>
 .magazine-editor-fields {
   border: 0;
@@ -785,6 +1116,64 @@ async function publish() {
   align-items: end;
   flex-wrap: wrap;
   margin-bottom: 24px;
+}
+.issue-notes {
+  margin: 0 0 16px;
+}
+.issue-notes ul {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0;
+  padding: 0;
+  list-style: none;
+}
+.issue-notes li p {
+  margin: 4px 0 0;
+}
+.issue-notes li button {
+  margin-left: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted, #aaa);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.issue-note-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+.issue-note-form textarea {
+  flex: 1 1 280px;
+}
+.issue-note-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.compose-settings {
+  flex-basis: 100%;
+  display: grid;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid #fff2;
+  border-radius: 8px;
+}
+.compose-settings summary {
+  cursor: pointer;
+}
+.compose-settings fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  border: 0;
+  padding: 0;
+}
+.compose-settings fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .magazine-editor label {
   display: grid;

@@ -38,3 +38,8 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Playwright
+e2e/.auth/
+test-results/
+playwright-report/

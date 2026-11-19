@@ -4,6 +4,8 @@ import type { JournalCandidate, JournalPage } from '@/services/api'
 import MagazinePage from './MagazinePage.vue'
 import { journalImageUrl } from './journalImage'
 import { pageCurl } from './pageCurl'
+import { playFlipSound } from './flipSound'
+import { FONT_SCALES, useReaderPreferences } from './readerPreferences'
 import {
   canTurnReader,
   normalizeDesktopReaderIndex,
@@ -13,6 +15,12 @@ import {
 
 const props = defineProps<{ pages: JournalPage[]; materials: JournalCandidate[] }>()
 const book = ref<HTMLElement>()
+const preferences = useReaderPreferences()
+const themes = [
+  { id: 'paper', label: 'Бумага' },
+  { id: 'sepia', label: 'Сепия' },
+  { id: 'night', label: 'Ночь' },
+] as const
 const index = ref(0)
 const width = ref(1200)
 const height = ref(780)
@@ -78,6 +86,7 @@ function canTurn(value: number) {
   return canTurnReader(index.value, value > 0 ? 1 : -1, props.pages.length, mobile.value)
 }
 function settle(complete: boolean) {
+  if (complete && preferences.sound && !reducedMotion?.matches) playFlipSound()
   phase.value = 'settling'
   const from = progress.value
   const target = complete ? 1 : 0
@@ -151,10 +160,27 @@ function up(event: PointerEvent, cancelled = false) {
   gesture = undefined
   if (book.value?.hasPointerCapture(event.pointerId))
     book.value.releasePointerCapture(event.pointerId)
-  if (!current.started) return
+  if (!current.started) {
+    tapEdge(current, event, cancelled)
+    return
+  }
   const distance = (current.x - event.clientX) * direction.value
   const velocity = distance / Math.max(1, performance.now() - current.time)
   settle(!cancelled && (progress.value > 0.32 || (distance > 45 && velocity > 0.45)))
+}
+/** A quick tap on the outer edge of the spread turns the page, like on an e-reader. */
+function tapEdge(
+  start: { x: number; y: number; time: number },
+  event: PointerEvent,
+  cancelled: boolean,
+) {
+  if (cancelled || !book.value || busy.value) return
+  const moved = Math.hypot(event.clientX - start.x, event.clientY - start.y)
+  if (moved > 6 || performance.now() - start.time > 350) return
+  const rect = book.value.getBoundingClientRect()
+  const edge = (event.clientX - rect.left) / rect.width
+  if (edge < 0.12) turn(-1)
+  else if (edge > 0.88) turn(1)
 }
 function click(event: MouseEvent) {
   if (suppressClick) {
@@ -216,8 +242,52 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="curl-reader">
-    <p class="curl-help">Потяните страницу мышью или пальцем · ← → на клавиатуре</p>
+  <div
+    class="curl-reader"
+    :data-theme="preferences.theme"
+    :style="{ '--reader-font-scale': preferences.fontScale }"
+  >
+    <div class="reader-settings" role="group" aria-label="Настройки чтения">
+      <span class="reader-settings-group" role="radiogroup" aria-label="Тема">
+        <button
+          v-for="theme in themes"
+          :key="theme.id"
+          type="button"
+          role="radio"
+          :aria-checked="preferences.theme === theme.id"
+          :class="{ active: preferences.theme === theme.id }"
+          @click="preferences.theme = theme.id"
+        >
+          {{ theme.label }}
+        </button>
+      </span>
+      <span class="reader-settings-group" role="radiogroup" aria-label="Размер текста">
+        <button
+          v-for="(scale, step) in FONT_SCALES"
+          :key="scale"
+          type="button"
+          role="radio"
+          :aria-checked="preferences.fontScale === scale"
+          :class="{ active: preferences.fontScale === scale }"
+          :aria-label="`Размер текста ${step + 1} из ${FONT_SCALES.length}`"
+          :title="`Размер текста ${step + 1} из ${FONT_SCALES.length}`"
+          :style="{ fontSize: `${12 + step * 3}px` }"
+          @click="preferences.fontScale = scale"
+        >
+          A
+        </button>
+      </span>
+      <button
+        type="button"
+        class="reader-sound"
+        :class="{ active: preferences.sound }"
+        :aria-pressed="preferences.sound"
+        @click="preferences.sound = !preferences.sound"
+      >
+        {{ preferences.sound ? '🔊 Звук листания' : '🔈 Звук выключен' }}
+      </button>
+    </div>
+    <p class="curl-help">Потяните страницу мышью или пальцем · тап по краю · ← → на клавиатуре</p>
     <div class="curl-stage">
       <div
         ref="book"
@@ -329,6 +399,47 @@ onBeforeUnmount(() => {
   </div>
 </template>
 <style>
+.reader-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.reader-settings-group {
+  display: inline-flex;
+  border: 1px solid #fff3;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.reader-settings button {
+  min-width: 36px;
+  padding: 5px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.reader-settings button.active {
+  background: #c5ef58;
+  color: #151711;
+}
+.reader-sound {
+  border: 1px solid #fff3 !important;
+  border-radius: 999px;
+}
+.curl-reader .magazine-copy {
+  font-size: calc(14px * var(--reader-font-scale, 1)) !important;
+}
+.curl-reader[data-theme='sepia'] .curl-book {
+  filter: sepia(0.55) saturate(0.9) brightness(0.97);
+}
+.curl-reader[data-theme='night'] .curl-book {
+  filter: invert(0.9) hue-rotate(180deg) brightness(0.9);
+}
+.curl-reader[data-theme='night'] .curl-book img {
+  filter: invert(1) hue-rotate(180deg);
+}
 .curl-help {
   font-size: 13px;
   color: #a4ab9e;
@@ -357,10 +468,12 @@ onBeforeUnmount(() => {
     0 25px 50px #0007;
   touch-action: pan-y;
   cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 .curl-book.is-dragging {
   cursor: grabbing;
-  user-select: none;
 }
 .curl-book.is-turning > .magazine-page {
   pointer-events: none;
