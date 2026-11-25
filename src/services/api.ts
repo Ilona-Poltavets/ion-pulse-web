@@ -556,6 +556,45 @@ export function addBookmark(publicationId: string): Promise<void> {
 export function removeBookmark(publicationId: string): Promise<void> {
   return request(`/discover/bookmarks/${publicationId}`, { method: 'DELETE' })
 }
+export interface SteamPlayedGame {
+  app_id: number
+  name: string
+  hours: number
+  recent_hours: number
+  image_url: string
+}
+export interface SteamRecommendation {
+  app_id: number
+  title: string
+  match_percent: number
+  tags: string[]
+  matched_tags: string[]
+  because: Array<{ name: string; hours: number }>
+  year: number
+  image_url: string
+  store_url: string
+}
+export interface SteamRecommendations {
+  profile: {
+    steam_id: string
+    name: string
+    avatar_url: string
+    games_owned: number
+    games_played: number
+    total_hours: number
+    recent_hours: number
+    top_played: SteamPlayedGame[]
+    top_tags: string[]
+  }
+  recommendations: SteamRecommendation[]
+}
+export function recommendFromSteam(profileUrl: string): Promise<SteamRecommendations> {
+  return request('/recommendations/steam', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profile_url: profileUrl }),
+  })
+}
 export interface CalendarEntry {
   kind: 'publication' | 'issue'
   id: string

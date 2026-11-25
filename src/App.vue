@@ -53,6 +53,7 @@ void auth.restore()
           <RouterLink to="/journal">{{ t('navigation.journal') }}</RouterLink>
           <RouterLink to="/games/roulette">{{ t('navigation.roulette') }}</RouterLink>
           <RouterLink to="/search">Поиск</RouterLink>
+          <RouterLink to="/recommendations">Подбор игр</RouterLink>
         </nav>
 
         <div class="header-actions">

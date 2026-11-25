@@ -17,6 +17,7 @@ import AdminUsersView from '@/views/AdminUsersView.vue'
 import GameRouletteView from '@/views/GameRouletteView.vue'
 import GameView from '@/views/GameView.vue'
 import SearchView from '@/views/SearchView.vue'
+import RecommendationsView from '@/views/RecommendationsView.vue'
 import BookmarksView from '@/views/BookmarksView.vue'
 import EditorialDashboardView from '@/views/EditorialDashboardView.vue'
 
@@ -31,6 +32,7 @@ const router = createRouter({
     { path: '/games/roulette', name: 'game-roulette', component: GameRouletteView },
     { path: '/games/:slug', name: 'game', component: GameView },
     { path: '/search', name: 'search', component: SearchView },
+    { path: '/recommendations', name: 'recommendations', component: RecommendationsView },
     { path: '/bookmarks', name: 'bookmarks', component: BookmarksView },
     { path: '/editorial/desk', name: 'editorial-desk', component: EditorialDashboardView },
     { path: '/content/categories', name: 'categories-management', component: CategoriesView },
